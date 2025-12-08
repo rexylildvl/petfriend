@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../services/groq_client.dart';
+
 class ChatPage extends StatefulWidget {
   const ChatPage({super.key});
 
@@ -21,29 +23,31 @@ class ChatMessage {
 
 class _ChatPageState extends State<ChatPage> {
   final TextEditingController _messageController = TextEditingController();
-  final List<ChatMessage> _messages = [];
   final ScrollController _scrollController = ScrollController();
+  final GroqClient _groqClient = GroqClient();
+  final List<ChatMessage> _messages = [];
+
   String _bearName = "Bobo";
   String _userName = "Friend";
+  bool _isSending = false;
 
   @override
   void initState() {
     super.initState();
-    // Pesan pembuka dari beruang - FIXED: menggunakan _bearName
     _messages.add(
       ChatMessage(
-        text: "Hi there! I'm $_bearName! What should I call you?", // Changed from $bearName to $_bearName
+        text: "Hi there! I'm $_bearName! What should I call you?",
         isUser: false,
         time: DateTime.now(),
       ),
     );
   }
 
-  void _sendMessage() {
+  Future<void> _sendMessage() async {
+    if (_isSending) return;
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
 
-    // Tambah pesan user
     setState(() {
       _messages.add(
         ChatMessage(
@@ -52,194 +56,74 @@ class _ChatPageState extends State<ChatPage> {
           time: DateTime.now(),
         ),
       );
+      _isSending = true;
     });
 
-    // Simpan nama user jika pesan pertama
     if (_messages.length == 2) {
       _userName = text;
     }
 
     _messageController.clear();
+    _scrollToBottom();
+    await _getBearResponse(text);
+    if (mounted) {
+      setState(() {
+        _isSending = false;
+      });
+    }
+  }
 
-    // Scroll ke bawah
+  Future<void> _getBearResponse(String userMessage) async {
+    try {
+      final history = _messages
+          .map(
+            (message) => <String, String>{
+              'role': message.isUser ? 'user' : 'assistant',
+              'content': message.text,
+            },
+          )
+          .toList();
+
+      final response = await _groqClient.send(<Map<String, String>>[
+        <String, String>{
+          'role': 'system',
+          'content':
+              'You are Bobo the friendly virtual bear. Keep replies concise, warm, and helpful. If the user asks your name, you are Bobo. Use a cheerful tone.',
+        },
+        ...history,
+      ]);
+
+      if (!mounted) return;
+      setState(() {
+        _messages.add(
+          ChatMessage(
+            text: response.trim(),
+            isUser: false,
+            time: DateTime.now(),
+          ),
+        );
+      });
+      _scrollToBottom();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal memuat respons: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_scrollController.hasClients) return;
       _scrollController.animateTo(
         _scrollController.position.maxScrollExtent,
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeOut,
       );
     });
-
-    // Respon dari beruang (simulasi AI)
-    _getBearResponse(text);
-  }
-
-  void _getBearResponse(String userMessage) {
-    String response = "";
-
-    // Simple response logic
-    if (userMessage.toLowerCase().contains("hello") ||
-        userMessage.toLowerCase().contains("hi")) {
-      response = "Hello $_userName! How are you today? 🐻";
-    } else if (userMessage.toLowerCase().contains("how are you")) {
-      response = "I'm doing great! Thanks for asking! I could use some honey though... 🍯";
-    } else if (userMessage.toLowerCase().contains("hungry")) {
-      response = "I'm always hungry! Can you feed me some berries? 🍓";
-    } else if (userMessage.toLowerCase().contains("play")) {
-      response = "Yay! I love playing! Let's go find some adventure! 🌲";
-    } else if (userMessage.toLowerCase().contains("love")) {
-      response = "Aww, I love you too $_userName! You're my best friend! 💖";
-    } else if (userMessage.toLowerCase().contains("sleep")) {
-      response = "I'm getting sleepy too... *yawns* Time for a nap! 😴";
-    } else if (userMessage.toLowerCase().contains("name")) {
-      response = "My name is $_bearName! I'm your virtual bear friend!"; // Fixed here too
-    } else {
-      List<String> randomResponses = [
-        "That's interesting! Tell me more!",
-        "I'm listening, $_userName! 👂",
-        "Wow! Really? 🐻",
-        "I love chatting with you!",
-        "Let's go on an adventure together!",
-        "Do you have any honey? I'm craving some!",
-        "I'm here for you always!",
-        "What should we do today?"
-      ];
-      response = randomResponses[DateTime.now().millisecond % randomResponses.length];
-    }
-
-    Future.delayed(const Duration(milliseconds: 500), () {
-      if (mounted) {
-        setState(() {
-          _messages.add(
-            ChatMessage(
-              text: response,
-              isUser: false,
-              time: DateTime.now(),
-            ),
-          );
-        });
-
-        // Scroll ke bawah lagi
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          _scrollController.animateTo(
-            _scrollController.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOut,
-          );
-        });
-      }
-    });
-  }
-
-  Widget _buildMessageBubble(ChatMessage message) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        mainAxisAlignment: message.isUser
-            ? MainAxisAlignment.end
-            : MainAxisAlignment.start,
-        children: [
-          if (!message.isUser)
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: Colors.amber.shade100,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.brown.shade300),
-              ),
-              child: const Icon(
-                Icons.pets,
-                color: Colors.brown,
-                size: 24,
-              ),
-            ),
-          if (!message.isUser) const SizedBox(width: 8),
-          Flexible(
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 12,
-              ),
-              decoration: BoxDecoration(
-                color: message.isUser
-                    ? Colors.brown.shade600
-                    : Colors.amber.shade50,
-                borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(20),
-                  topRight: const Radius.circular(20),
-                  bottomLeft: message.isUser
-                      ? const Radius.circular(20)
-                      : const Radius.circular(4),
-                  bottomRight: message.isUser
-                      ? const Radius.circular(4)
-                      : const Radius.circular(20),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    message.isUser ? "You" : _bearName,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: message.isUser
-                          ? Colors.amber.shade200
-                          : Colors.brown.shade700,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    message.text,
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: message.isUser
-                          ? Colors.white
-                          : Colors.brown.shade900,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    "${message.time.hour}:${message.time.minute.toString().padLeft(2, '0')}",
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: message.isUser
-                          ? Colors.amber.shade200
-                          : Colors.brown.shade500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          if (message.isUser) const SizedBox(width: 8),
-          if (message.isUser)
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: Colors.brown.shade100,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.brown.shade300),
-              ),
-              child: const Icon(
-                Icons.person,
-                color: Colors.brown,
-                size: 24,
-              ),
-            ),
-        ],
-      ),
-    );
   }
 
   @override
@@ -296,9 +180,7 @@ class _ChatPageState extends State<ChatPage> {
                 builder: (context) => AlertDialog(
                   title: const Text("Chat Info"),
                   content: const Text(
-                      "This is your virtual bear friend! "
-                          "Chat naturally and build your friendship. "
-                          "The bear will remember your name and respond to your messages."
+                    "This is your virtual bear friend! Chat naturally and build your friendship. The bear will remember your name and respond to your messages.",
                   ),
                   actions: [
                     TextButton(
@@ -315,7 +197,6 @@ class _ChatPageState extends State<ChatPage> {
       ),
       body: Column(
         children: [
-          // Status Bar
           Container(
             padding: const EdgeInsets.symmetric(vertical: 8),
             color: Colors.amber.shade50,
@@ -324,12 +205,14 @@ class _ChatPageState extends State<ChatPage> {
               children: [
                 Icon(
                   Icons.circle,
-                  color: Colors.green.shade500,
+                  color: _isSending ? Colors.green.shade500 : Colors.grey,
                   size: 12,
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  "$_bearName is typing...", // Fixed here too
+                  _isSending
+                      ? "$_bearName is typing..."
+                      : "Say hi to $_bearName",
                   style: TextStyle(
                     color: Colors.brown.shade700,
                     fontSize: 12,
@@ -338,8 +221,6 @@ class _ChatPageState extends State<ChatPage> {
               ],
             ),
           ),
-
-          // Chat Messages
           Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -353,8 +234,6 @@ class _ChatPageState extends State<ChatPage> {
               ),
             ),
           ),
-
-          // Input Area
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -378,6 +257,7 @@ class _ChatPageState extends State<ChatPage> {
                 Expanded(
                   child: TextField(
                     controller: _messageController,
+                    enabled: !_isSending,
                     decoration: InputDecoration(
                       hintText: "Type a message...",
                       filled: true,
@@ -392,7 +272,6 @@ class _ChatPageState extends State<ChatPage> {
                       ),
                       suffixIcon: IconButton(
                         onPressed: () {
-                          // Add emoji/sticker
                           showModalBottomSheet(
                             context: context,
                             builder: (context) => Container(
@@ -403,10 +282,10 @@ class _ChatPageState extends State<ChatPage> {
                                 children: const [
                                   Text("🐻", style: TextStyle(fontSize: 24)),
                                   Text("🍯", style: TextStyle(fontSize: 24)),
-                                  Text("🌲", style: TextStyle(fontSize: 24)),
-                                  Text("🍓", style: TextStyle(fontSize: 24)),
-                                  Text("💖", style: TextStyle(fontSize: 24)),
-                                  Text("🌟", style: TextStyle(fontSize: 24)),
+                                  Text("🎉", style: TextStyle(fontSize: 24)),
+                                  Text("😊", style: TextStyle(fontSize: 24)),
+                                  Text("🏕️", style: TextStyle(fontSize: 24)),
+                                  Text("💤", style: TextStyle(fontSize: 24)),
                                 ],
                               ),
                             ),
@@ -424,7 +303,7 @@ class _ChatPageState extends State<ChatPage> {
                 const SizedBox(width: 12),
                 Container(
                   decoration: BoxDecoration(
-                    color: Colors.brown.shade600,
+                    color: _isSending ? Colors.brown.shade200 : Colors.brown.shade600,
                     borderRadius: BorderRadius.circular(25),
                     boxShadow: [
                       BoxShadow(
@@ -435,7 +314,7 @@ class _ChatPageState extends State<ChatPage> {
                     ],
                   ),
                   child: IconButton(
-                    onPressed: _sendMessage,
+                    onPressed: _isSending ? null : _sendMessage,
                     icon: const Icon(Icons.send, color: Colors.white),
                   ),
                 ),
@@ -447,10 +326,117 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
+  Widget _buildMessageBubble(ChatMessage message) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        mainAxisAlignment:
+            message.isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        children: [
+          if (!message.isUser)
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.amber.shade100,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.brown.shade300),
+              ),
+              child: const Icon(
+                Icons.pets,
+                color: Colors.brown,
+                size: 24,
+              ),
+            ),
+          if (!message.isUser) const SizedBox(width: 8),
+          Flexible(
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
+              ),
+              decoration: BoxDecoration(
+                color:
+                    message.isUser ? Colors.brown.shade600 : Colors.amber.shade50,
+                borderRadius: BorderRadius.only(
+                  topLeft: const Radius.circular(20),
+                  topRight: const Radius.circular(20),
+                  bottomLeft:
+                      message.isUser ? const Radius.circular(20) : const Radius.circular(4),
+                  bottomRight:
+                      message.isUser ? const Radius.circular(4) : const Radius.circular(20),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    message.isUser ? "You" : _bearName,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: message.isUser
+                          ? Colors.amber.shade200
+                          : Colors.brown.shade700,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    message.text,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color:
+                          message.isUser ? Colors.white : Colors.brown.shade900,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    "${message.time.hour}:${message.time.minute.toString().padLeft(2, '0')}",
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: message.isUser
+                          ? Colors.amber.shade200
+                          : Colors.brown.shade500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (message.isUser) const SizedBox(width: 8),
+          if (message.isUser)
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.brown.shade100,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.brown.shade300),
+              ),
+              child: const Icon(
+                Icons.person,
+                color: Colors.brown,
+                size: 24,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _messageController.dispose();
     _scrollController.dispose();
+    _groqClient.close();
     super.dispose();
   }
 }
