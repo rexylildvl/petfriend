@@ -117,7 +117,6 @@ class SupabaseService {
       'name': 'Bobo',
       'energy': 70,
       'happiness': 80,
-      'health': 90,
       'identity_prompt': 'You are Bobo, a friendly virtual bear.',
     }).select().single();
 

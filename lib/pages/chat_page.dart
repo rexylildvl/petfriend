@@ -50,13 +50,18 @@ class _ChatPageState extends State<ChatPage> {
 
       _messages.clear();
       if (history.isNotEmpty) {
-        _messages.addAll(history.map(
+        final loadedMessages = history.map(
           (m) => ChatMessage(
             text: m.content,
             isUser: m.role == 'user',
             time: m.createdAt,
           ),
-        ));
+        ).toList();
+
+        // Sort by time: Oldest first (Index 0) -> Newest last
+        loadedMessages.sort((a, b) => a.time.compareTo(b.time));
+
+        _messages.addAll(loadedMessages);
       } else {
         _messages.add(
           ChatMessage(
@@ -191,12 +196,13 @@ Instructions:
 
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_scrollController.hasClients) return;
-      _scrollController.animateTo(
-        0.0, // Scroll to bottom (start of reversed list)
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
     });
   }
 
@@ -319,13 +325,11 @@ Instructions:
                   ? const Center(child: CircularProgressIndicator())
                   : ListView.builder(
                       controller: _scrollController,
-                      reverse: true, // Chat starts from bottom
+                      // reverse: false is default
                       padding: const EdgeInsets.only(top: 16, bottom: 16),
                       itemCount: _messages.length,
                       itemBuilder: (context, index) {
-                        // Reverse index to show newest at bottom
-                        final reversedIndex = _messages.length - 1 - index;
-                        return _buildMessageBubble(_messages[reversedIndex]);
+                        return _buildMessageBubble(_messages[index]);
                       },
                     ),
             ),
