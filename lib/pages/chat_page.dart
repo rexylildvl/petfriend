@@ -1,7 +1,9 @@
 ﻿import 'package:flutter/material.dart';
-
+import 'package:provider/provider.dart';
 import '../services/groq_client.dart';
 import '../services/supabase_service.dart';
+import '../providers/pet_provider.dart';
+import '../theme/app_theme.dart';
 
 class ChatPage extends StatefulWidget {
   const ChatPage({super.key});
@@ -123,15 +125,37 @@ class _ChatPageState extends State<ChatPage> {
   Future<void> _getBearResponse(String userMessage) async {
     try {
       final history = _buildLimitedHistory();
+      final pet = context.read<PetProvider>();
+
+      final systemPrompt = '''
+You are ${pet.petName}, a virtual bear.
+Current Stats:
+- Hunger: ${pet.hunger.toInt()}/100
+- Energy: ${pet.energy.toInt()}/100
+- Happiness: ${pet.happiness.toInt()}/100
+- Hygiene: ${pet.hygiene.toInt()}/100
+- Bladder: ${pet.bladder.toInt()}/100 (High is bad)
+- Level: ${pet.level} (${pet.growthStageLabel})
+- Mood: ${pet.currentMood}
+
+Instructions:
+- Roleplay as ${pet.petName}.
+- Your mood is ${pet.currentMood}. Reflect this in your tone.
+- If you are hungry (Hunger < 30), complain about food.
+- If you are tired (Energy < 30), say you want to sleep.
+- If you need the toilet (Bladder > 80), say you need to go to the bathroom!
+- If you are dirty (Hygiene < 30), ask for a bath.
+- As a ${pet.growthStageLabel}, speak appropriately for your age.
+- Keep responses short and fun (under 2 sentences usually).
+''';
 
       final response = await _groqClient.send(<Map<String, String>>[
         <String, String>{
           'role': 'system',
-          'content':
-              'You are Bobo the friendly virtual bear. Keep replies concise, warm, and helpful. If the user asks your name, you are Bobo. Use a cheerful tone.',
+          'content': systemPrompt,
         },
         ...history,
-      ], maxTokens: 512, temperature: 0.6);
+      ], maxTokens: 512, temperature: 0.7);
 
       if (!mounted) return;
       final botMessage = ChatMessage(
@@ -177,7 +201,6 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   List<Map<String, String>> _buildLimitedHistory() {
-    // Take only the last 12 messages and truncate each to avoid token overflow.
     const maxMessages = 12;
     const maxCharsPerMessage = 500;
     final start = _messages.length > maxMessages ? _messages.length - maxMessages : 0;
@@ -197,7 +220,7 @@ class _ChatPageState extends State<ChatPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF3E7),
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
         title: Row(
           children: [
@@ -205,13 +228,13 @@ class _ChatPageState extends State<ChatPage> {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: Colors.amber.shade100,
+                color: AppTheme.accentLight.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: Colors.brown.shade300),
+                border: Border.all(color: AppTheme.accent),
               ),
               child: const Icon(
                 Icons.pets,
-                color: Colors.brown,
+                color: AppTheme.accent,
                 size: 20,
               ),
             ),
@@ -230,7 +253,7 @@ class _ChatPageState extends State<ChatPage> {
                   "Online - Tap for status",
                   style: TextStyle(
                     fontSize: 11,
-                    color: Colors.brown.shade600,
+                    color: Colors.white.withOpacity(0.8),
                   ),
                 ),
               ],
@@ -238,7 +261,7 @@ class _ChatPageState extends State<ChatPage> {
           ],
         ),
         centerTitle: false,
-        backgroundColor: Colors.brown[700],
+        backgroundColor: AppTheme.primaryDark,
         elevation: 0,
         actions: [
           IconButton(
@@ -267,7 +290,7 @@ class _ChatPageState extends State<ChatPage> {
         children: [
           Container(
             padding: const EdgeInsets.symmetric(vertical: 8),
-            color: Colors.amber.shade50,
+            color: AppTheme.primaryLight.withOpacity(0.1),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -282,7 +305,7 @@ class _ChatPageState extends State<ChatPage> {
                       ? "$_bearName is typing..."
                       : "Say hi to $_bearName",
                   style: TextStyle(
-                    color: Colors.brown.shade700,
+                    color: AppTheme.textSecondary,
                     fontSize: 12,
                   ),
                 ),
@@ -310,7 +333,7 @@ class _ChatPageState extends State<ChatPage> {
               color: Colors.white,
               border: Border(
                 top: BorderSide(
-                  color: Colors.brown.shade200,
+                  color: Colors.grey.shade200,
                   width: 1,
                 ),
               ),
@@ -331,7 +354,7 @@ class _ChatPageState extends State<ChatPage> {
                     decoration: InputDecoration(
                       hintText: "Type a message...",
                       filled: true,
-                      fillColor: Colors.amber.shade50,
+                      fillColor: AppTheme.background,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(25),
                         borderSide: BorderSide.none,
@@ -348,12 +371,12 @@ class _ChatPageState extends State<ChatPage> {
                 Container(
                   decoration: BoxDecoration(
                     color: _isSending || _isLoading
-                        ? Colors.brown.shade200
-                        : Colors.brown.shade600,
+                        ? Colors.grey
+                        : AppTheme.primary,
                     borderRadius: BorderRadius.circular(25),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.brown.withOpacity(0.3),
+                        color: AppTheme.primary.withOpacity(0.3),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -385,13 +408,13 @@ class _ChatPageState extends State<ChatPage> {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: Colors.amber.shade100,
+                color: AppTheme.accentLight.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.brown.shade300),
+                border: Border.all(color: AppTheme.accent.withOpacity(0.5)),
               ),
               child: const Icon(
                 Icons.pets,
-                color: Colors.brown,
+                color: AppTheme.accent,
                 size: 24,
               ),
             ),
@@ -403,8 +426,7 @@ class _ChatPageState extends State<ChatPage> {
                 vertical: 12,
               ),
               decoration: BoxDecoration(
-                color:
-                    message.isUser ? Colors.brown.shade600 : Colors.amber.shade50,
+                color: message.isUser ? AppTheme.primary : Colors.white,
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(20),
                   topRight: const Radius.circular(20),
@@ -415,7 +437,7 @@ class _ChatPageState extends State<ChatPage> {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withOpacity(0.05),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),
@@ -430,8 +452,8 @@ class _ChatPageState extends State<ChatPage> {
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: message.isUser
-                          ? Colors.amber.shade200
-                          : Colors.brown.shade700,
+                          ? Colors.white70
+                          : AppTheme.textSecondary,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -440,7 +462,7 @@ class _ChatPageState extends State<ChatPage> {
                     style: TextStyle(
                       fontSize: 16,
                       color:
-                          message.isUser ? Colors.white : Colors.brown.shade900,
+                          message.isUser ? Colors.white : AppTheme.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -449,8 +471,8 @@ class _ChatPageState extends State<ChatPage> {
                     style: TextStyle(
                       fontSize: 10,
                       color: message.isUser
-                          ? Colors.amber.shade200
-                          : Colors.brown.shade500,
+                          ? Colors.white60
+                          : Colors.grey,
                     ),
                   ),
                 ],
@@ -463,13 +485,13 @@ class _ChatPageState extends State<ChatPage> {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: Colors.brown.shade100,
+                color: AppTheme.primaryLight.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.brown.shade300),
+                border: Border.all(color: AppTheme.primary.withOpacity(0.5)),
               ),
               child: const Icon(
                 Icons.person,
-                color: Colors.brown,
+                color: AppTheme.primary,
                 size: 24,
               ),
             ),

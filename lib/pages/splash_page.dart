@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/pet_provider.dart';
+import '../services/supabase_service.dart';
+import '../theme/app_theme.dart';
 import 'home_page.dart';
 
 class SplashPage extends StatefulWidget {
@@ -24,8 +28,31 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
       curve: Curves.easeInOut,
     );
 
-    // Start animation
     _controller.forward();
+    _initData();
+  }
+
+  Future<void> _initData() async {
+    try {
+      final setup = await SupabaseService.instance.ensureSetup();
+      
+      if (mounted) {
+        context.read<PetProvider>().init(setup.userId, setup.petName);
+        
+        // Wait a bit for animation
+        await Future.delayed(const Duration(seconds: 2));
+        
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const HomePage()),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint("Error initializing data: $e");
+      // Handle error (maybe show logout button)
+    }
   }
 
   @override
@@ -37,7 +64,7 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF3E7),
+      backgroundColor: AppTheme.background,
       body: SafeArea(
         child: Center(
           child: Padding(
@@ -45,121 +72,40 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Animated bear image with bounce effect
                 ScaleTransition(
                   scale: _animation,
                   child: Image.asset(
-                    "assets/bear.png", // Pastikan file ini ada di folder assets
+                    "assets/bear.png",
                     height: 200,
                     fit: BoxFit.contain,
                   ),
                 ),
-
                 const SizedBox(height: 30),
-
-                // Animated title with fade effect
                 FadeTransition(
                   opacity: _animation,
                   child: Column(
                     children: [
                       Text(
                         "PetFriend",
-                        style: TextStyle(
+                        style: AppTheme.heading1.copyWith(
                           fontSize: 36,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.brown[800],
                           letterSpacing: 1.2,
+                          color: AppTheme.primaryDark,
                         ),
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        "Your AI Pet Companion",
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.brown[600],
+                        "Loading your pet...",
+                        style: AppTheme.bodyMedium.copyWith(
                           fontStyle: FontStyle.italic,
+                          color: AppTheme.textSecondary,
                         ),
                       ),
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 50),
-
-                // Enhanced button with animation
-                SlideTransition(
-                  position: Tween<Offset>(
-                    begin: const Offset(0, 0.5),
-                    end: Offset.zero,
-                  ).animate(_animation),
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.brown[700],
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 40,
-                        vertical: 16,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      elevation: 8,
-                      shadowColor: Colors.brown.withOpacity(0.3),
-                    ),
-                    onPressed: () {
-                      // Add a little haptic feedback (if you want)
-                      // HapticFeedback.lightImpact();
-
-                      Navigator.pushReplacement(
-                        context,
-                        PageRouteBuilder(
-                          pageBuilder: (_, __, ___) => const HomePage(),
-                          transitionDuration: const Duration(milliseconds: 500),
-                          transitionsBuilder: (_, animation, __, child) {
-                            return FadeTransition(
-                              opacity: animation,
-                              child: child,
-                            );
-                          },
-                        ),
-                      );
-                    },
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          "Start Chatting",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        SizedBox(width: 10),
-                        Icon(
-                          Icons.arrow_forward_rounded,
-                          size: 20,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                // Optional: Add a cute subtitle
-                const SizedBox(height: 30),
-                FadeTransition(
-                  opacity: _animation,
-                  child: const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 20),
-                    child: Text(
-                      "Adopt your virtual bear friend and build an amazing bond!",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.black54,
-                      ),
-                    ),
-                  ),
-                ),
+                const CircularProgressIndicator(color: AppTheme.primary),
               ],
             ),
           ),

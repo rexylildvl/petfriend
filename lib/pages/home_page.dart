@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/pet_provider.dart';
+import '../theme/app_theme.dart';
 import 'chat_page.dart';
 import 'profile_page.dart';
 import 'pet_care_page.dart';
-import 'login_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -12,9 +14,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin {
-  double _energyLevel = 0.7;
-  double _happinessLevel = 0.8;
-  double _healthLevel = 0.9;
   late AnimationController _animationController;
   late Animation<double> _bounceAnimation;
 
@@ -43,77 +42,15 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     super.dispose();
   }
 
-  void _feedPet() {
-    setState(() {
-      _energyLevel = (_energyLevel + 0.15).clamp(0.0, 1.0);
-      _happinessLevel = (_happinessLevel + 0.1).clamp(0.0, 1.0);
-    });
-
-    // Show snackbar feedback
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text("Yummy! Your bear is happy! 🍯"),
-        backgroundColor: Colors.amber[700],
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-      ),
-    );
-  }
-
-  void _playWithPet() {
-    setState(() {
-      _happinessLevel = (_happinessLevel + 0.2).clamp(0.0, 1.0);
-      _energyLevel = (_energyLevel - 0.1).clamp(0.0, 1.0);
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text("Fun time! Your bear loves playing! 🎈"),
-        backgroundColor: Colors.blue[400],
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-      ),
-    );
-  }
-
-  void _healPet() {
-    setState(() {
-      _healthLevel = 1.0;
-      _energyLevel = (_energyLevel + 0.05).clamp(0.0, 1.0);
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text("Your bear feels much better now! 💖"),
-        backgroundColor: Colors.green[400],
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    final pet = context.watch<PetProvider>();
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F0E3),
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const Text(
-          "PetFriend 🐻",
-          style: TextStyle(
-            fontWeight: FontWeight.w800,
-            fontSize: 24,
-          ),
-        ),
-        centerTitle: true,
-        backgroundColor: Colors.brown[700],
-        elevation: 10,
-        shadowColor: Colors.brown.withOpacity(0.4),
+        title: const Text("PetFriend 🐻"),
+        backgroundColor: AppTheme.primaryDark,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(
             bottom: Radius.circular(25),
@@ -139,166 +76,29 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Welcome Card
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.amber.shade100,
-                      Colors.orange.shade100,
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.brown.withOpacity(0.1),
-                      blurRadius: 15,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Hello, Pet Friend! 👋",
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.brown[800],
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      "Your virtual bear is waiting for you!",
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.brown[600],
-                      ),
-                    ),
-                    
-                    // --- TOMBOL LOGIN DITAMBAHKAN DI SINI ---
-                    const SizedBox(height: 15), // Jarak antara teks dan tombol
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        // Arahkan ke halaman Login
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const LoginPage()),
-                        );
-                      },
-                      icon: const Icon(Icons.login_rounded, size: 18),
-                      label: const Text("Login Now"),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.brown[800], // Warna tombol coklat tua
-                        foregroundColor: Colors.white,      // Warna teks putih
-                        elevation: 0,                       // Flat agar menyatu dengan kartu
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                      ),
-                    ),
-                    // ----------------------------------------
-                  ],
-                ),
-              ),
+              _buildWelcomeCard(pet),
 
               const SizedBox(height: 25),
 
               // Pet Display with Animation
-              Container(
-                height: 240,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.brown.shade100,
-                      Colors.orange.shade100,
-                    ],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                  ),
-                  borderRadius: BorderRadius.circular(25),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.brown.withOpacity(0.2),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
-                child: Center(
-                  child: AnimatedBuilder(
-                    animation: _bounceAnimation,
-                    builder: (context, child) {
-                      return Transform.translate(
-                        offset: Offset(0, _bounceAnimation.value),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Image.asset(
-                              "assets/bear.png",
-                              height: 160,
-                              fit: BoxFit.contain,
-                            ),
-                            const SizedBox(height: 10),
-                            Text(
-                              "Bobo the Bear",
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.brown[800],
-                              ),
-                            ),
-                            Text(
-                              "Level 5 • Best Friend",
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.brown[600],
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ),
+              _buildPetDisplay(pet),
 
               const SizedBox(height: 25),
 
               // Stats Section
-              Text(
-                "Pet Stats 📊",
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.brown[800],
-                ),
-              ),
+              Text("Pet Stats 📊", style: AppTheme.heading2),
               const SizedBox(height: 15),
 
-              _buildStatBar("Energy", _energyLevel, Colors.amber),
+              _buildStatBar("Hunger", pet.hunger, AppTheme.hungerColor, Icons.restaurant),
               const SizedBox(height: 12),
-              _buildStatBar("Happiness", _happinessLevel, Colors.pink),
+              _buildStatBar("Energy", pet.energy, AppTheme.energyColor, Icons.bolt),
               const SizedBox(height: 12),
-              _buildStatBar("Health", _healthLevel, Colors.green),
+              _buildStatBar("Happiness", pet.happiness, AppTheme.happinessColor, Icons.sentiment_satisfied),
 
               const SizedBox(height: 30),
 
               // Quick Actions
-              Text(
-                "Quick Actions ⚡",
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.brown[800],
-                ),
-              ),
+              Text("Quick Actions ⚡", style: AppTheme.heading2),
               const SizedBox(height: 15),
 
               Row(
@@ -307,25 +107,34 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                   _buildActionButton(
                     icon: Icons.restaurant,
                     label: "Feed",
-                    color: Colors.amber,
-                    onTap: _feedPet,
+                    color: AppTheme.hungerColor,
+                    onTap: () {
+                       pet.feed(10); // Simple feed action
+                       _showSnackBar("Fed ${pet.petName}! Yummy!", AppTheme.hungerColor);
+                    },
                   ),
                   _buildActionButton(
                     icon: Icons.sports_baseball,
                     label: "Play",
-                    color: Colors.blue,
-                    onTap: _playWithPet,
+                    color: AppTheme.energyColor,
+                    onTap: () {
+                      pet.play();
+                      _showSnackBar("Played with ${pet.petName}! Fun!", AppTheme.energyColor);
+                    },
                   ),
                   _buildActionButton(
-                    icon: Icons.favorite,
-                    label: "Heal",
-                    color: Colors.red,
-                    onTap: _healPet,
+                    icon: Icons.cleaning_services,
+                    label: "Clean",
+                    color: AppTheme.hygieneColor,
+                    onTap: () {
+                      pet.clean();
+                      _showSnackBar("${pet.petName} is sparkling clean!", AppTheme.hygieneColor);
+                    },
                   ),
                   _buildActionButton(
-                    icon: Icons.auto_awesome,
-                    label: "More",
-                    color: Colors.purple,
+                    icon: Icons.grid_view_rounded,
+                    label: "Care",
+                    color: AppTheme.primary,
                     onTap: () {
                       Navigator.push(
                         context,
@@ -343,22 +152,20 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   icon: const Icon(Icons.chat_bubble, size: 24),
-                  label: const Text(
-                    "Chat with Your Bear",
-                    style: TextStyle(
+                  label: Text(
+                    "Chat with ${pet.petName}",
+                    style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.brown[700],
-                    foregroundColor: Colors.white,
+                    backgroundColor: AppTheme.primaryDark,
                     padding: const EdgeInsets.symmetric(vertical: 18),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                     ),
                     elevation: 8,
-                    shadowColor: Colors.brown.withOpacity(0.4),
                   ),
                   onPressed: () {
                     Navigator.push(
@@ -380,38 +187,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                   },
                 ),
               ),
-
-              const SizedBox(height: 15),
-
-              // Last Activity
-              Container(
-                padding: const EdgeInsets.all(15),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(15),
-                  border: Border.all(color: Colors.brown.shade200),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.access_time, color: Colors.brown[600]),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        "Last chat: 2 hours ago",
-                        style: TextStyle(
-                          color: Colors.brown[700],
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                    Chip(
-                      label: const Text("Active"),
-                      backgroundColor: Colors.green.shade100,
-                      labelStyle: const TextStyle(color: Colors.green),
-                    ),
-                  ],
-                ),
-              ),
             ],
           ),
         ),
@@ -419,38 +194,126 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     );
   }
 
-  Widget _buildStatBar(String label, double value, Color color) {
+  Widget _buildWelcomeCard(PetProvider pet) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [AppTheme.accentLight, AppTheme.accent],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primary.withOpacity(0.1),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Hello, Friend! 👋",
+            style: AppTheme.heading2.copyWith(color: AppTheme.primaryDark),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            "${pet.petName} is ${pet.currentMood.toLowerCase()} and waiting for you!",
+            style: AppTheme.bodyMedium.copyWith(color: AppTheme.primary),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPetDisplay(PetProvider pet) {
+    return Container(
+      height: 240,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppTheme.primaryLight.withOpacity(0.3), AppTheme.accentLight.withOpacity(0.3)],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+        borderRadius: BorderRadius.circular(25),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primary.withOpacity(0.1),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Center(
+        child: AnimatedBuilder(
+          animation: _bounceAnimation,
+          builder: (context, child) {
+            return Transform.translate(
+              offset: Offset(0, _bounceAnimation.value),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset(
+                    "assets/bear.png",
+                    height: 160,
+                    fit: BoxFit.contain,
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    pet.petName,
+                    style: AppTheme.heading2,
+                  ),
+                  Text(
+                    "Level ${pet.level} • ${pet.growthStageLabel}",
+                    style: AppTheme.bodyMedium,
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatBar(String label, double value, Color color, IconData icon) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.brown[700],
-              ),
+            Row(
+              children: [
+                Icon(icon, size: 18, color: AppTheme.textSecondary),
+                const SizedBox(width: 8),
+                Text(label, style: AppTheme.heading3.copyWith(fontSize: 16)),
+              ],
             ),
             Text(
-              "${(value * 100).toInt()}%",
+              "${value.toInt()}%",
               style: TextStyle(
                 fontSize: 14,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.bold,
                 color: color,
               ),
             ),
           ],
         ),
         const SizedBox(height: 6),
-        LinearProgressIndicator(
-          value: value,
-          backgroundColor: color.withOpacity(0.2),
-          color: color,
-          minHeight: 10,
+        ClipRRect(
           borderRadius: BorderRadius.circular(10),
+          child: LinearProgressIndicator(
+            value: value / 100,
+            backgroundColor: color.withOpacity(0.2),
+            color: color,
+            minHeight: 10,
+          ),
         ),
       ],
     );
@@ -466,6 +329,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       children: [
         InkWell(
           onTap: onTap,
+          borderRadius: BorderRadius.circular(20),
           child: Container(
             width: 70,
             height: 70,
@@ -487,42 +351,23 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: Colors.brown[700],
+            color: AppTheme.textSecondary,
           ),
         ),
       ],
     );
   }
-}
 
-// Placeholder pages untuk sekarang
-class ProfilePage extends StatelessWidget {
-  const ProfilePage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Profile"),
-      ),
-      body: const Center(
-        child: Text("Profile Page - Coming Soon"),
-      ),
-    );
-  }
-}
-
-class PetCarePage extends StatelessWidget {
-  const PetCarePage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Pet Care"),
-      ),
-      body: const Center(
-        child: Text("Pet Care Page - Coming Soon"),
+  void _showSnackBar(String message, Color color) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: color,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        duration: const Duration(milliseconds: 1000),
       ),
     );
   }

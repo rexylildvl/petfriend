@@ -13,11 +13,13 @@ class SupabaseService {
     if (userId == null || userId.isEmpty) {
       throw Exception('User not logged in');
     }
-    await _upsertProfile(userId);
+    final profile = await _upsertProfile(userId);
     final pet = await _getOrCreatePet(userId);
     final session = await _getOrCreateSession(userId, pet.id);
     return SetupResult(
       userId: userId,
+      userEmail: profile.email,
+      userName: profile.name,
       petId: pet.id,
       petName: pet.name,
       sessionId: session.id,
@@ -60,12 +62,19 @@ class SupabaseService {
 
   // Internal helpers
 
-  Future<void> _upsertProfile(String userId) async {
+  Future<ProfileRow> _upsertProfile(String userId) async {
     final email = _client.auth.currentUser?.email ?? 'user-$userId@local.app';
-    await _client.from('profiles').upsert({
-      'id': userId,
-      'email': email,
-    });
+    final name = _client.auth.currentUser?.userMetadata?['name'] as String?;
+    final data = await _client
+        .from('profiles')
+        .upsert({
+          'id': userId,
+          'email': email,
+          'name': name ?? email.split('@').first,
+        })
+        .select()
+        .single();
+    return ProfileRow.fromMap(data);
   }
 
   Future<PetRow> _getOrCreatePet(String userId) async {
@@ -118,12 +127,16 @@ class SupabaseService {
 
 class SetupResult {
   final String userId;
+  final String userEmail;
+  final String userName;
   final String petId;
   final String petName;
   final String sessionId;
 
   SetupResult({
     required this.userId,
+    required this.userEmail,
+    required this.userName,
     required this.petId,
     required this.petName,
     required this.sessionId,
@@ -172,6 +185,26 @@ class SessionRow {
   factory SessionRow.fromMap(Map<String, dynamic> map) {
     return SessionRow(
       id: map['id'] as String,
+    );
+  }
+}
+
+class ProfileRow {
+  final String id;
+  final String email;
+  final String name;
+
+  ProfileRow({
+    required this.id,
+    required this.email,
+    required this.name,
+  });
+
+  factory ProfileRow.fromMap(Map<String, dynamic> map) {
+    return ProfileRow(
+      id: map['id'] as String,
+      email: (map['email'] as String?) ?? '',
+      name: (map['name'] as String?) ?? '',
     );
   }
 }

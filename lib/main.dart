@@ -4,6 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'package:provider/provider.dart';
+import 'providers/pet_provider.dart';
+import 'theme/app_theme.dart';
+
 import 'pages/splash_page.dart';
 import 'pages/login_page.dart';
 
@@ -11,7 +15,14 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await _loadEnv();
   await _initSupabase();
-  runApp(const PetFriendApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => PetProvider()),
+      ],
+      child: const PetFriendApp(),
+    ),
+  );
 }
 
 Future<void> _loadEnv() async {
@@ -108,10 +119,7 @@ class PetFriendApp extends StatelessWidget {
     return MaterialApp(
       title: 'PetFriend',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.brown),
-      ),
+      theme: AppTheme.themeData,
       home: StreamBuilder<AuthState>(
         stream: Supabase.instance.client.auth.onAuthStateChange,
         builder: (context, snapshot) {
