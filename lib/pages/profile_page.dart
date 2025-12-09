@@ -8,107 +8,195 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  String _userName = "Pet Lover";
-  String _userEmail = "petlover@example.com";
-  int _daysWithBear = 15;
-  int _totalChats = 128;
-  int _mealsGiven = 42;
-  int _playSessions = 28;
+  String userName = 'John Anderson';
+  String userEmail = 'john.anderson@email.com';
+  String userPassword = '••••••••';
 
-  final List<Achievement> _achievements = [
-    Achievement(
-      title: "First Friend",
-      description: "Chatted for the first time",
-      icon: Icons.chat,
-      unlocked: true,
-      date: "Day 1",
-    ),
-    Achievement(
-      title: "Feeder",
-      description: "Fed bear 10 times",
-      icon: Icons.restaurant,
-      unlocked: true,
-      date: "Day 3",
-    ),
-    Achievement(
-      title: "Best Friend",
-      description: "Chatted for 7 days straight",
-      icon: Icons.favorite,
-      unlocked: true,
-      date: "Day 7",
-    ),
-    Achievement(
-      title: "Explorer",
-      description: "Played 20 times",
-      icon: Icons.explore,
-      unlocked: false,
-      date: "Locked",
-    ),
-    Achievement(
-      title: "Master Carer",
-      description: "Complete all care tasks",
-      icon: Icons.star,
-      unlocked: false,
-      date: "Locked",
-    ),
-  ];
+  String petName = 'Bruno';
+  String petHobby = 'Forest exploration, Honey collection, Cave maintenance';
 
-  void _editProfile() {
+  void _showEditDialog(String type) {
+    final TextEditingController nameController = TextEditingController();
+    final TextEditingController field2Controller = TextEditingController();
+    final TextEditingController field3Controller = TextEditingController();
+
+    if (type == 'user') {
+      nameController.text = userName;
+      field2Controller.text = userEmail;
+      field3Controller.text = userPassword;
+    } else {
+      nameController.text = petName;
+      field2Controller.text = petHobby;
+    }
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Edit Profile"),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                initialValue: _userName,
-                decoration: const InputDecoration(
-                  labelText: "Your Name",
-                  border: OutlineInputBorder(),
-                ),
-                onChanged: (value) {
-                  setState(() {
-                    _userName = value;
-                  });
-                },
+      builder: (BuildContext context) {
+        bool isPasswordVisible = false;
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
               ),
-              const SizedBox(height: 16),
-              TextFormField(
-                initialValue: _userEmail,
-                decoration: const InputDecoration(
-                  labelText: "Email",
-                  border: OutlineInputBorder(),
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                constraints:
+                const BoxConstraints(maxWidth: 450, maxHeight: 600),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            type == 'user'
+                                ? 'Edit Personal Profile'
+                                : 'Edit Bear Profile',
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () => Navigator.pop(context),
+                            icon: const Icon(Icons.close),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      TextField(
+                        controller: nameController,
+                        decoration: InputDecoration(
+                          labelText:
+                          type == 'user' ? 'Full Name' : 'Bear Name',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          filled: true,
+                          fillColor: Colors.grey[50],
+                          prefixIcon: Icon(
+                            type == 'user'
+                                ? Icons.person_outline
+                                : Icons.pets_outlined,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: field2Controller,
+                        maxLines: type == 'user' ? 1 : 3,
+                        decoration: InputDecoration(
+                          labelText: type == 'user'
+                              ? 'Email Address'
+                              : 'Interests & Activities',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          filled: true,
+                          fillColor: Colors.grey[50],
+                          prefixIcon: Icon(
+                            type == 'user'
+                                ? Icons.email_outlined
+                                : Icons.interests_outlined,
+                          ),
+                        ),
+                      ),
+                      if (type == 'user') ...[
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: field3Controller,
+                          obscureText: !isPasswordVisible,
+                          decoration: InputDecoration(
+                            labelText: 'Password',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            filled: true,
+                            fillColor: Colors.grey[50],
+                            prefixIcon: const Icon(Icons.lock_outline),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                isPasswordVisible
+                                    ? Icons.visibility_outlined
+                                    : Icons.visibility_off_outlined,
+                              ),
+                              onPressed: () {
+                                setDialogState(() {
+                                  isPasswordVisible = !isPasswordVisible;
+                                });
+                              },
+                            ),
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 24),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('Cancel'),
+                          ),
+                          const SizedBox(width: 12),
+                          ElevatedButton(
+                            onPressed: () {
+                              setState(() {
+                                if (type == 'user') {
+                                  userName = nameController.text;
+                                  userEmail = field2Controller.text;
+                                  if (field3Controller.text.isNotEmpty) {
+                                    userPassword = field3Controller.text;
+                                  }
+                                } else {
+                                  petName = nameController.text;
+                                  petHobby = field2Controller.text;
+                                }
+                              });
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    type == 'user'
+                                        ? 'Profile updated successfully'
+                                        : 'Bear profile updated',
+                                  ),
+                                  backgroundColor: Colors.green,
+                                  behavior: SnackBarBehavior.floating,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.brown[700],
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 12,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: Text(
+                                type == 'user' ? 'Save Changes' : 'Update Profile'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-                onChanged: (value) {
-                  setState(() {
-                    _userEmail = value;
-                  });
-                },
               ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text("Profile updated successfully!"),
-                  backgroundColor: Colors.green,
-                ),
-              );
-            },
-            child: const Text("Save"),
-          ),
-        ],
-      ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -120,59 +208,64 @@ class _ProfilePageState extends State<ProfilePage> {
         slivers: [
           SliverAppBar(
             expandedHeight: 250,
+            pinned: false,
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
+                      Colors.brown.shade900,
                       Colors.brown.shade700,
-                      Colors.amber.shade600,
                     ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
                   ),
                 ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    const SizedBox(height: 70),
-                    CircleAvatar(
-                      radius: 60,
-                      backgroundColor: Colors.white,
-                      child: Icon(
-                        Icons.person,
-                        size: 80,
-                        color: Colors.brown.shade800,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 20),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 120,
+                        height: 120,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Colors.brown.shade300,
+                            width: 4,
+                          ),
+                        ),
+                        child: Icon(
+                          Icons.account_circle_outlined,
+                          size: 100,
+                          color: Colors.brown.shade800,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      _userName,
-                      style: const TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
+                      const SizedBox(height: 16),
+                      Text(
+                        userName,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          letterSpacing: 0.5,
+                        ),
                       ),
-                    ),
-                    Text(
-                      _userEmail,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.white.withOpacity(0.9),
+                      const SizedBox(height: 8),
+                      Text(
+                        userEmail,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.white.withOpacity(0.85),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
-            actions: [
-              IconButton(
-                onPressed: _editProfile,
-                icon: const Icon(Icons.edit, color: Colors.white),
-                tooltip: "Edit Profile",
-              ),
-            ],
           ),
           SliverToBoxAdapter(
             child: Padding(
@@ -180,333 +273,267 @@ class _ProfilePageState extends State<ProfilePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Stats Card
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.brown.withOpacity(0.1),
-                          blurRadius: 15,
-                          offset: const Offset(0, 5),
+                          color: Colors.brown.withOpacity(0.08),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
                         ),
                       ],
                     ),
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          "📈 Your Stats",
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.brown[800],
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        GridView.count(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          crossAxisCount: 2,
-                          childAspectRatio: 2.5,
-                          mainAxisSpacing: 15,
-                          crossAxisSpacing: 15,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            _buildStatItem(
-                              Icons.calendar_today,
-                              "$_daysWithBear Days",
-                              "With Bear",
-                              Colors.amber,
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.person_outline,
+                                  color: Colors.brown[800],
+                                  size: 24,
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  "Personal Information",
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.brown[800],
+                                    letterSpacing: 0.3,
+                                  ),
+                                ),
+                              ],
                             ),
-                            _buildStatItem(
-                              Icons.chat_bubble,
-                              "$_totalChats Chats",
-                              "Total",
-                              Colors.blue,
-                            ),
-                            _buildStatItem(
-                              Icons.restaurant,
-                              "$_mealsGiven Meals",
-                              "Given",
-                              Colors.green,
-                            ),
-                            _buildStatItem(
-                              Icons.sports_baseball,
-                              "$_playSessions Plays",
-                              "Sessions",
-                              Colors.purple,
+                            IconButton(
+                              onPressed: () => _showEditDialog('user'),
+                              icon: Icon(
+                                Icons.edit_outlined,
+                                color: Colors.brown[600],
+                                size: 20,
+                              ),
+                              tooltip: "Edit Information",
                             ),
                           ],
+                        ),
+                        const SizedBox(height: 20),
+                        _buildInfoRow(
+                          Icons.person_outline,
+                          "Full Name",
+                          userName,
+                        ),
+                        const SizedBox(height: 16),
+                        _buildInfoRow(
+                          Icons.email_outlined,
+                          "Email Address",
+                          userEmail,
+                        ),
+                        const SizedBox(height: 16),
+                        _buildInfoRow(
+                          Icons.lock_outline,
+                          "Password",
+                          userPassword,
+                          isPassword: true,
                         ),
                       ],
                     ),
                   ),
-
-                  const SizedBox(height: 30),
-
-                  // Bear Info
-                  Text(
-                    "🐻 Your Bear Info",
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.brown[800],
-                    ),
-                  ),
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 24),
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       color: Colors.amber.shade50,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.amber.shade200),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 80,
-                          height: 80,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(40),
-                            border: Border.all(color: Colors.brown.shade300),
-                          ),
-                          child: const Icon(
-                            Icons.pets,
-                            color: Colors.brown,
-                            size: 50,
-                          ),
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.brown.withOpacity(0.08),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
                         ),
-                        const SizedBox(width: 20),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Bobo the Bear",
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w700,
+                      ],
+                      border: Border.all(
+                        color: Colors.amber.shade100,
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.pets_outlined,
                                   color: Colors.brown[800],
+                                  size: 24,
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  "Bear Companion",
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.brown[800],
+                                    letterSpacing: 0.3,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            IconButton(
+                              onPressed: () => _showEditDialog('pet'),
+                              icon: Icon(
+                                Icons.edit_outlined,
+                                color: Colors.brown[600],
+                                size: 20,
+                              ),
+                              tooltip: "Edit Bear Profile",
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        Center(
+                          child: Column(
+                            children: [
+                              Container(
+                                width: 120,
+                                height: 120,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(60),
+                                  border: Border.all(
+                                    color: Colors.brown.shade300,
+                                    width: 3,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.brown.withOpacity(0.15),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(60),
+                                  child: Image.asset(
+                                    'assets/bear.png',
+                                    width: 80,
+                                    height: 80,
+                                    fit: BoxFit.cover,
+                                  ),
                                 ),
                               ),
-                              const SizedBox(height: 5),
+                              const SizedBox(height: 16),
                               Text(
-                                "Virtual Companion • Level 5",
+                                petName,
                                 style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.brown[600],
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.brown[900],
+                                  letterSpacing: 0.5,
                                 ),
                               ),
-                              const SizedBox(height: 10),
-                              LinearProgressIndicator(
-                                value: 0.65,
-                                backgroundColor: Colors.brown.shade200,
-                                color: Colors.amber.shade600,
-                                minHeight: 8,
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              const SizedBox(height: 5),
-                              Text(
-                                "65% to next level",
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.brown[500],
+                              const SizedBox(height: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.amber.shade100,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: Colors.amber.shade200,
+                                  ),
+                                ),
+                                child: Text(
+                                  "Brown Bear",
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.brown[800],
+                                  ),
                                 ),
                               ),
                             ],
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 30),
-
-                  // Achievements
-                  Text(
-                    "🏆 Achievements",
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.brown[800],
-                    ),
-                  ),
-                  const SizedBox(height: 15),
-                  ListView.separated(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: _achievements.length,
-                    separatorBuilder: (context, index) =>
-                    const SizedBox(height: 12),
-                    itemBuilder: (context, index) {
-                      final achievement = _achievements[index];
-                      return Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: achievement.unlocked
-                              ? Colors.white
-                              : Colors.grey.shade100,
-                          borderRadius: BorderRadius.circular(15),
-                          border: Border.all(
-                            color: achievement.unlocked
-                                ? Colors.amber.shade200
-                                : Colors.grey.shade300,
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 50,
-                              height: 50,
-                              decoration: BoxDecoration(
-                                color: achievement.unlocked
-                                    ? Colors.amber.shade100
-                                    : Colors.grey.shade200,
-                                borderRadius: BorderRadius.circular(25),
-                              ),
-                              child: Icon(
-                                achievement.icon,
-                                color: achievement.unlocked
-                                    ? Colors.amber.shade800
-                                    : Colors.grey,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    achievement.title,
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      color: achievement.unlocked
-                                          ? Colors.brown[800]
-                                          : Colors.grey,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    achievement.description,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: achievement.unlocked
-                                          ? Colors.brown[600]
-                                          : Colors.grey,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: achievement.unlocked
-                                    ? Colors.amber.shade50
-                                    : Colors.grey.shade200,
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                achievement.date,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: achievement.unlocked
-                                      ? Colors.amber.shade800
-                                      : Colors.grey,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-
-                  const SizedBox(height: 40),
-
-                  // Settings
-                  Text(
-                    "⚙️ Settings",
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.brown[800],
-                    ),
-                  ),
-                  const SizedBox(height: 15),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(15),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.brown.withOpacity(0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        _buildSettingItem(
-                          Icons.notifications,
-                          "Notifications",
-                          true,
-                        ),
-                        const Divider(height: 1, indent: 16),
-                        _buildSettingItem(
-                          Icons.music_note,
-                          "Sound Effects",
-                          true,
-                        ),
-                        const Divider(height: 1, indent: 16),
-                        _buildSettingItem(
-                          Icons.brightness_6,
-                          "Dark Mode",
-                          false,
-                        ),
-                        const Divider(height: 1, indent: 16),
-                        _buildSettingItem(
-                          Icons.help,
-                          "Help & Support",
-                          false,
+                        const SizedBox(height: 24),
+                        _buildBearInfoRow(
+                          Icons.interests_outlined,
+                          "Interests",
+                          petHobby,
+                          maxLines: 3,
                         ),
                       ],
                     ),
                   ),
-
-                  const SizedBox(height: 30),
-
-                  // Logout Button
+                  const SizedBox(height: 32),
                   SizedBox(
                     width: double.infinity,
-                    child: OutlinedButton(
+                    child: ElevatedButton.icon(
                       onPressed: () {
-                        // Logout logic here
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            title: const Text('Confirm Logout'),
+                            content: const Text(
+                                'Are you sure you want to log out?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text('Cancel'),
+                              ),
+                              ElevatedButton(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red,
+                                  foregroundColor: Colors.white,
+                                ),
+                                child: const Text('Logout'),
+                              ),
+                            ],
+                          ),
+                        );
                       },
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.red,
-                        side: const BorderSide(color: Colors.red),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
+                      icon: const Icon(
+                        Icons.logout_outlined,
+                        color: Colors.white,
+                      ),
+                      label: const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        child: Text(
+                          "Log Out",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
-                      child: const Text(
-                        "Log Out",
-                        style: TextStyle(fontSize: 16),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.brown[700],
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 2,
                       ),
                     ),
                   ),
-
-                  const SizedBox(height: 50),
+                  const SizedBox(height: 40),
                 ],
               ),
             ),
@@ -516,73 +543,101 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildStatItem(
-      IconData icon, String value, String label, Color color) {
-    return Container(
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: color.withOpacity(0.2)),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: color, size: 24),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: color,
-            ),
+  Widget _buildInfoRow(IconData icon, String label, String value,
+      {bool isPassword = false}) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: Colors.brown.shade50,
+            borderRadius: BorderRadius.circular(8),
           ),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              color: color.withOpacity(0.8),
-            ),
+          child: Icon(
+            icon,
+            color: Colors.brown.shade700,
+            size: 20,
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSettingItem(IconData icon, String title, bool value) {
-    return ListTile(
-      leading: Icon(icon, color: Colors.brown),
-      title: Text(
-        title,
-        style: TextStyle(
-          fontSize: 16,
-          color: Colors.brown[800],
         ),
-      ),
-      trailing: Switch(
-        value: value,
-        onChanged: (newValue) {
-          // Handle switch change
-        },
-        activeColor: Colors.amber,
-      ),
-      onTap: () {},
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.brown[600],
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 0.3,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                isPassword ? "••••••••" : value,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.brown[800],
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
-}
 
-class Achievement {
-  final String title;
-  final String description;
-  final IconData icon;
-  final bool unlocked;
-  final String date;
-
-  Achievement({
-    required this.title,
-    required this.description,
-    required this.icon,
-    required this.unlocked,
-    required this.date,
-  });
+  Widget _buildBearInfoRow(IconData icon, String label, String value,
+      {int maxLines = 1}) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: Colors.amber.shade100,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            icon,
+            color: Colors.amber.shade800,
+            size: 20,
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.brown[600],
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 0.3,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.brown[800],
+                  fontWeight: FontWeight.w600,
+                ),
+                maxLines: maxLines,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 }
