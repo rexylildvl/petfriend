@@ -11,7 +11,11 @@ class GroqClient {
   static const _endpoint = 'https://api.groq.com/openai/v1/chat/completions';
   static const _model = 'llama-3.3-70b-versatile';
 
-  Future<String> send(List<Map<String, String>> messages) async {
+  Future<String> send(
+    List<Map<String, String>> messages, {
+    int maxTokens = 512,
+    double temperature = 0.6,
+  }) async {
     String? apiKey = dotenv.env['GROQ_API_KEY'];
     apiKey ??= const String.fromEnvironment('GROQ_API_KEY');
     apiKey ??= Platform.environment['GROQ_API_KEY'];
@@ -29,7 +33,8 @@ class GroqClient {
       body: jsonEncode(<String, dynamic>{
         'model': _model,
         'messages': messages,
-        'temperature': 0.6,
+        'temperature': temperature,
+        'max_tokens': maxTokens,
       }),
     );
 
