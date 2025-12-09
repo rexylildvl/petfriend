@@ -12,20 +12,32 @@ Future<void> main() async {
 
 Future<void> _loadEnv() async {
   final exeDir = File(Platform.resolvedExecutable).parent;
-  final rootFromExe = exeDir.parent.parent.parent.parent.parent;
+  final rootFromExe =
+      exeDir.parent.parent.parent.parent.parent;
 
   final candidates = <String>[
-    '.env', // root saat run via `flutter run`
-    '../.env', // jika working dir satu level di bawah root
-    '${rootFromExe.path}${Platform.pathSeparator}.env', // naik dari exe ke root proyek
-    'build/windows/x64/runner/Debug/.env', // jika sudah disalin ke folder build
+    '.env',
+    '../.env',
+    '${rootFromExe.path}${Platform.pathSeparator}.env',
+    'build/windows/x64/runner/Debug/.env',
   ];
+
+  bool loaded = false;
 
   for (final path in candidates) {
     if (File(path).existsSync()) {
-      await dotenv.load(fileName: path, isOptional: true);
+      await dotenv.load(fileName: path);
+      loaded = true;
+      break;
     }
-    if ((dotenv.env['GROQ_API_KEY'] ?? '').isNotEmpty) break;
+  }
+
+  if (!loaded) {
+    throw Exception('File .env tidak ditemukan di semua path!');
+  }
+
+  if ((dotenv.env['GROQ_API_KEY'] ?? '').isEmpty) {
+    throw Exception('GROQ_API_KEY tidak ada di file .env!');
   }
 }
 
