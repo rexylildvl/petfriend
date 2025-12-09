@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -29,12 +30,12 @@ Future<void> _loadEnv() async {
   final exeDir = File(Platform.resolvedExecutable).parent;
   final rootFromExe = exeDir.parent.parent.parent.parent.parent;
 
-  final candidates = <String>[
-    '.env',
-    '../.env',
-    '${rootFromExe.path}${Platform.pathSeparator}.env',
-    'build/windows/x64/runner/Debug/.env',
-  ];
+    final candidates = <String>[
+      '.env', 
+      '../.env', 
+      '${rootFromExe.path}${Platform.pathSeparator}.env', 
+      'build/windows/x64/runner/Debug/.env', 
+    ];
 
   for (final path in candidates) {
     if (File(path).existsSync()) {

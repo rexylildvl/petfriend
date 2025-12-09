@@ -335,6 +335,94 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   }) {
     return GestureDetector(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Opacity(
+        opacity: onTap == null ? 0.5 : 1.0,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
+          decoration: BoxDecoration(
+            color: _isSleeping ? Colors.grey[800] : Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isHighlighted
+                  ? color.withOpacity(0.8)
+                  : _isSleeping
+                      ? color.withOpacity(0.5)
+                      : color.withOpacity(0.3),
+              width: isHighlighted ? 3 : 2,
+            ),
+            boxShadow: isHighlighted
+                ? [
+                    BoxShadow(
+                      color: color.withOpacity(0.3),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                : [
+                    BoxShadow(
+                      color: _isSleeping
+                          ? Colors.black.withOpacity(0.3)
+                          : color.withOpacity(0.1),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+          ),
+          child: Stack(
+            children: [
+              Column(
+                children: [
+                  Container(
+                    width: 50,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: _isSleeping
+                          ? Colors.grey[700]
+                          : color.withOpacity(isHighlighted ? 0.25 : 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      icon,
+                      size: 28,
+                      color: color,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: _isSleeping
+                          ? Colors.grey[300]
+                          : Colors.brown[800],
+                    ),
+                  ),
+                ],
+              ),
+              if (isHighlighted && !_isSleeping)
+                Positioned(
+                  top: -5,
+                  right: -5,
+                  child: Container(
+                    width: 20,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                    child: const Icon(
+                      Icons.priority_high,
+                      size: 10,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
       child: Column(
         children: [
           Container(
