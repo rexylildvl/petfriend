@@ -1,6 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../services/groq_client.dart';
+import '../services/supabase_service.dart';
 
 class ChatPage extends StatefulWidget {
   const ChatPage({super.key});
@@ -14,11 +15,7 @@ class ChatMessage {
   final bool isUser;
   final DateTime time;
 
-  ChatMessage({
-    required this.text,
-    required this.isUser,
-    required this.time,
-  });
+  ChatMessage({required this.text, required this.isUser, required this.time});
 }
 
 class _ChatPageState extends State<ChatPage> {
@@ -27,24 +24,67 @@ class _ChatPageState extends State<ChatPage> {
   final GroqClient _groqClient = GroqClient();
   final List<ChatMessage> _messages = [];
 
-  String _bearName = "Bobo";
-  String _userName = "Friend";
+  String _bearName = 'Bobo';
+  String _userName = 'Friend';
   bool _isSending = false;
+  bool _isLoading = true;
+  String? _sessionId;
+  String? _userId;
 
   @override
   void initState() {
     super.initState();
-    _messages.add(
-      ChatMessage(
-        text: "Hi there! I'm $_bearName! What should I call you?",
-        isUser: false,
-        time: DateTime.now(),
-      ),
-    );
+    _initChat();
+  }
+
+  Future<void> _initChat() async {
+    try {
+      final setup = await SupabaseService.instance.ensureSetup();
+      _sessionId = setup.sessionId;
+      _userId = setup.userId;
+      _bearName = setup.petName;
+
+      final history = await SupabaseService.instance.fetchMessages(setup.sessionId);
+
+      _messages.clear();
+      if (history.isNotEmpty) {
+        _messages.addAll(history.map(
+          (m) => ChatMessage(
+            text: m.content,
+            isUser: m.role == 'user',
+            time: m.createdAt,
+          ),
+        ));
+      } else {
+        _messages.add(
+          ChatMessage(
+            text: "Hi there! I'm $_bearName! What should I call you?",
+            isUser: false,
+            time: DateTime.now(),
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to load chat data: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   Future<void> _sendMessage() async {
-    if (_isSending) return;
+    if (_isSending || _isLoading || _sessionId == null || _userId == null) {
+      return;
+    }
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
 
@@ -63,6 +103,13 @@ class _ChatPageState extends State<ChatPage> {
       _userName = text;
     }
 
+    await SupabaseService.instance.addMessage(
+      sessionId: _sessionId!,
+      userId: _userId!,
+      role: 'user',
+      content: text,
+    );
+
     _messageController.clear();
     _scrollToBottom();
     await _getBearResponse(text);
@@ -75,14 +122,7 @@ class _ChatPageState extends State<ChatPage> {
 
   Future<void> _getBearResponse(String userMessage) async {
     try {
-      final history = _messages
-          .map(
-            (message) => <String, String>{
-              'role': message.isUser ? 'user' : 'assistant',
-              'content': message.text,
-            },
-          )
-          .toList();
+      final history = _buildLimitedHistory();
 
       final response = await _groqClient.send(<Map<String, String>>[
         <String, String>{
@@ -91,24 +131,34 @@ class _ChatPageState extends State<ChatPage> {
               'You are Bobo the friendly virtual bear. Keep replies concise, warm, and helpful. If the user asks your name, you are Bobo. Use a cheerful tone.',
         },
         ...history,
-      ]);
+      ], maxTokens: 512, temperature: 0.6);
 
       if (!mounted) return;
+      final botMessage = ChatMessage(
+        text: response.trim(),
+        isUser: false,
+        time: DateTime.now(),
+      );
       setState(() {
-        _messages.add(
-          ChatMessage(
-            text: response.trim(),
-            isUser: false,
-            time: DateTime.now(),
-          ),
-        );
+        _messages.add(botMessage);
       });
+      if (_sessionId != null && _userId != null) {
+        await SupabaseService.instance.addMessage(
+          sessionId: _sessionId!,
+          userId: _userId!,
+          role: 'assistant',
+          content: botMessage.text,
+        );
+      }
       _scrollToBottom();
     } catch (e) {
       if (!mounted) return;
+      setState(() {
+        _isSending = false;
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Gagal memuat respons: $e'),
+          content: Text('Failed to load response: $e'),
           backgroundColor: Colors.red,
         ),
       );
@@ -124,6 +174,24 @@ class _ChatPageState extends State<ChatPage> {
         curve: Curves.easeOut,
       );
     });
+  }
+
+  List<Map<String, String>> _buildLimitedHistory() {
+    // Take only the last 12 messages and truncate each to avoid token overflow.
+    const maxMessages = 12;
+    const maxCharsPerMessage = 500;
+    final start = _messages.length > maxMessages ? _messages.length - maxMessages : 0;
+    return _messages
+        .sublist(start)
+        .map(
+          (m) => <String, String>{
+            'role': m.isUser ? 'user' : 'assistant',
+            'content': m.text.length > maxCharsPerMessage
+                ? m.text.substring(0, maxCharsPerMessage)
+                : m.text,
+          },
+        )
+        .toList();
   }
 
   @override
@@ -159,7 +227,7 @@ class _ChatPageState extends State<ChatPage> {
                   ),
                 ),
                 Text(
-                  "Online • Tap for status",
+                  "Online - Tap for status",
                   style: TextStyle(
                     fontSize: 11,
                     color: Colors.brown.shade600,
@@ -224,14 +292,16 @@ class _ChatPageState extends State<ChatPage> {
           Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: ListView.builder(
-                controller: _scrollController,
-                padding: const EdgeInsets.only(top: 16, bottom: 16),
-                itemCount: _messages.length,
-                itemBuilder: (context, index) {
-                  return _buildMessageBubble(_messages[index]);
-                },
-              ),
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : ListView.builder(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.only(top: 16, bottom: 16),
+                      itemCount: _messages.length,
+                      itemBuilder: (context, index) {
+                        return _buildMessageBubble(_messages[index]);
+                      },
+                    ),
             ),
           ),
           Container(
@@ -257,7 +327,7 @@ class _ChatPageState extends State<ChatPage> {
                 Expanded(
                   child: TextField(
                     controller: _messageController,
-                    enabled: !_isSending,
+                    enabled: !_isSending && !_isLoading,
                     decoration: InputDecoration(
                       hintText: "Type a message...",
                       filled: true,
@@ -270,32 +340,6 @@ class _ChatPageState extends State<ChatPage> {
                         horizontal: 20,
                         vertical: 14,
                       ),
-                      suffixIcon: IconButton(
-                        onPressed: () {
-                          showModalBottomSheet(
-                            context: context,
-                            builder: (context) => Container(
-                              height: 200,
-                              padding: const EdgeInsets.all(16),
-                              child: GridView.count(
-                                crossAxisCount: 6,
-                                children: const [
-                                  Text("🐻", style: TextStyle(fontSize: 24)),
-                                  Text("🍯", style: TextStyle(fontSize: 24)),
-                                  Text("🎉", style: TextStyle(fontSize: 24)),
-                                  Text("😊", style: TextStyle(fontSize: 24)),
-                                  Text("🏕️", style: TextStyle(fontSize: 24)),
-                                  Text("💤", style: TextStyle(fontSize: 24)),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                        icon: Icon(
-                          Icons.emoji_emotions,
-                          color: Colors.brown.shade600,
-                        ),
-                      ),
                     ),
                     onSubmitted: (_) => _sendMessage(),
                   ),
@@ -303,7 +347,9 @@ class _ChatPageState extends State<ChatPage> {
                 const SizedBox(width: 12),
                 Container(
                   decoration: BoxDecoration(
-                    color: _isSending ? Colors.brown.shade200 : Colors.brown.shade600,
+                    color: _isSending || _isLoading
+                        ? Colors.brown.shade200
+                        : Colors.brown.shade600,
                     borderRadius: BorderRadius.circular(25),
                     boxShadow: [
                       BoxShadow(
@@ -314,7 +360,7 @@ class _ChatPageState extends State<ChatPage> {
                     ],
                   ),
                   child: IconButton(
-                    onPressed: _isSending ? null : _sendMessage,
+                    onPressed: _isSending || _isLoading ? null : _sendMessage,
                     icon: const Icon(Icons.send, color: Colors.white),
                   ),
                 ),
