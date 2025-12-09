@@ -60,6 +60,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/bear.png
+    - .env
 
   # To add assets to your application, add an assets section, like this:
   # assets:
@@ -91,3 +92,4 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+

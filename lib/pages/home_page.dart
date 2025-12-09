@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'chat_page.dart';
 import 'profile_page.dart';
 import 'pet_care_page.dart';
+import 'login_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -178,6 +179,30 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                         color: Colors.brown[600],
                       ),
                     ),
+                    
+                    // --- TOMBOL LOGIN DITAMBAHKAN DI SINI ---
+                    const SizedBox(height: 15), // Jarak antara teks dan tombol
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        // Arahkan ke halaman Login
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const LoginPage()),
+                        );
+                      },
+                      icon: const Icon(Icons.login_rounded, size: 18),
+                      label: const Text("Login Now"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.brown[800], // Warna tombol coklat tua
+                        foregroundColor: Colors.white,      // Warna teks putih
+                        elevation: 0,                       // Flat agar menyatu dengan kartu
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
+                    ),
+                    // ----------------------------------------
                   ],
                 ),
               ),
