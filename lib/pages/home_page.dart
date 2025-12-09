@@ -73,6 +73,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         child: Padding(
           padding: const EdgeInsets.all(20.0),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Welcome Card
@@ -144,86 +145,86 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                   ),
                 ],
               ),
-
-              const SizedBox(height: 30),
-
-              // Main Chat Button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.chat_bubble, size: 24),
-                  label: Text(
-                    "Chat with ${pet.petName}",
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryDark,
-                    padding: const EdgeInsets.symmetric(vertical: 18),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    elevation: 8,
-                  ),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      PageRouteBuilder(
-                        pageBuilder: (_, __, ___) => const ChatPage(),
-                        transitionDuration: const Duration(milliseconds: 400),
-                        transitionsBuilder: (_, animation, __, child) {
-                          return SlideTransition(
-                            position: Tween<Offset>(
-                              begin: const Offset(1, 0),
-                              end: Offset.zero,
-                            ).animate(animation),
-                            child: child,
-                          );
-                        },
-                      ),
-                    );
-                  },
-                ),
-              ),
             ],
           ),
         ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const ChatPage()),
+          );
+        },
+        backgroundColor: AppTheme.primary,
+        icon: const Icon(Icons.chat_bubble_outline, color: Colors.white),
+        label: const Text("Chat with Bear", style: TextStyle(color: Colors.white)),
       ),
     );
   }
 
   Widget _buildWelcomeCard(PetProvider pet) {
     return Container(
-      width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [AppTheme.accentLight, AppTheme.accent],
+          colors: [AppTheme.primaryLight, AppTheme.primary],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(25),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primary.withOpacity(0.1),
+            color: AppTheme.primary.withOpacity(0.3),
             blurRadius: 15,
-            offset: const Offset(0, 5),
+            offset: const Offset(0, 8),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Text(
-            "Hello, Friend! 👋",
-            style: AppTheme.heading2.copyWith(color: AppTheme.primaryDark),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.pets, color: Colors.white, size: 30),
           ),
-          const SizedBox(height: 5),
-          Text(
-            "${pet.petName} is ${pet.currentMood.toLowerCase()} and waiting for you!",
-            style: AppTheme.bodyMedium.copyWith(color: AppTheme.primary),
+          const SizedBox(width: 15),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Hello, Friend!",
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.9),
+                    fontSize: 16,
+                  ),
+                ),
+                Text(
+                  "How is ${pet.petName} today?",
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    "Mood: ${pet.currentMood}",
+                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -231,51 +232,57 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   }
 
   Widget _buildPetDisplay(PetProvider pet) {
-    return Container(
-      height: 240,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [AppTheme.primaryLight.withOpacity(0.3), AppTheme.accentLight.withOpacity(0.3)],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
-        borderRadius: BorderRadius.circular(25),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.primary.withOpacity(0.1),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Center(
-        child: AnimatedBuilder(
-          animation: _bounceAnimation,
-          builder: (context, child) {
-            return Transform.translate(
-              offset: Offset(0, _bounceAnimation.value),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Image.asset(
-                    "assets/bear.png",
-                    height: 160,
-                    fit: BoxFit.contain,
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    pet.petName,
-                    style: AppTheme.heading2,
-                  ),
-                  Text(
-                    "Level ${pet.level} • ${pet.growthStageLabel}",
-                    style: AppTheme.bodyMedium,
+    return Center(
+      child: AnimatedBuilder(
+        animation: _animationController,
+        builder: (context, child) {
+          return Transform.translate(
+            offset: Offset(0, _bounceAnimation.value),
+            child: child,
+          );
+        },
+        child: Column(
+          children: [
+            Container(
+              height: 220,
+              width: 220,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.brown.withOpacity(0.1),
+                    blurRadius: 30,
+                    spreadRadius: 5,
                   ),
                 ],
+                border: Border.all(color: AppTheme.primaryLight, width: 4),
               ),
-            );
-          },
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Image.asset(
+                  "assets/bear.png",
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+            const SizedBox(height: 15),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppTheme.accentLight,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: AppTheme.accent),
+              ),
+              child: Text(
+                "Level ${pet.level} • ${pet.growthStageLabel}",
+                style: const TextStyle(
+                  color: AppTheme.primaryDark,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -286,32 +293,33 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
-              children: [
-                Icon(icon, size: 18, color: AppTheme.textSecondary),
-                const SizedBox(width: 8),
-                Text(label, style: AppTheme.heading3.copyWith(fontSize: 16)),
-              ],
+            Icon(icon, size: 18, color: AppTheme.textSecondary),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                color: AppTheme.textSecondary,
+              ),
             ),
+            const Spacer(),
             Text(
               "${value.toInt()}%",
               style: TextStyle(
-                fontSize: 14,
                 fontWeight: FontWeight.bold,
                 color: color,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
         ClipRRect(
           borderRadius: BorderRadius.circular(10),
           child: LinearProgressIndicator(
             value: value / 100,
             backgroundColor: color.withOpacity(0.2),
-            color: color,
+            valueColor: AlwaysStoppedAnimation<Color>(color),
             minHeight: 10,
           ),
         ),
@@ -325,36 +333,37 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     required Color color,
     required VoidCallback onTap,
   }) {
-    return Column(
-      children: [
-        InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(20),
-          child: Container(
-            width: 70,
-            height: 70,
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            width: 60,
+            height: 60,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: color.withOpacity(0.3)),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: [
+                BoxShadow(
+                  color: color.withOpacity(0.2),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-            child: Icon(
-              icon,
-              size: 32,
-              color: color,
+            child: Icon(icon, color: color, size: 28),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 12,
+              color: AppTheme.textSecondary,
             ),
           ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: AppTheme.textSecondary,
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

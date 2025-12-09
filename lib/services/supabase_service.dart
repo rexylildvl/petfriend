@@ -60,6 +60,30 @@ class SupabaseService {
         .eq('id', sessionId);
   }
 
+  Future<void> updateUserProfile({String? name, String? email, String? password}) async {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) throw Exception('User not logged in');
+
+    // Update Auth (Email/Password)
+    final attrs = UserAttributes(
+      email: (email != null && email.isNotEmpty) ? email : null,
+      password: (password != null && password.isNotEmpty) ? password : null,
+    );
+
+    if (email != null || password != null) {
+      await _client.auth.updateUser(attrs);
+    }
+
+    // Update Profiles Table (Name, Email)
+    final updates = <String, dynamic>{};
+    if (name != null) updates['name'] = name;
+    if (email != null) updates['email'] = email;
+
+    if (updates.isNotEmpty) {
+      await _client.from('profiles').update(updates).eq('id', userId);
+    }
+  }
+
   // Internal helpers
 
   Future<ProfileRow> _upsertProfile(String userId) async {

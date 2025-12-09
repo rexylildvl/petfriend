@@ -193,7 +193,7 @@ Instructions:
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!_scrollController.hasClients) return;
       _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
+        0.0, // Scroll to bottom (start of reversed list)
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeOut,
       );
@@ -319,10 +319,13 @@ Instructions:
                   ? const Center(child: CircularProgressIndicator())
                   : ListView.builder(
                       controller: _scrollController,
+                      reverse: true, // Chat starts from bottom
                       padding: const EdgeInsets.only(top: 16, bottom: 16),
                       itemCount: _messages.length,
                       itemBuilder: (context, index) {
-                        return _buildMessageBubble(_messages[index]);
+                        // Reverse index to show newest at bottom
+                        final reversedIndex = _messages.length - 1 - index;
+                        return _buildMessageBubble(_messages[reversedIndex]);
                       },
                     ),
             ),

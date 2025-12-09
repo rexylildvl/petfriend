@@ -49,6 +49,18 @@ class PetProvider extends ChangeNotifier {
     _startDecayTimer();
   }
 
+  Future<void> updateName(String newName) async {
+    _petName = newName;
+    notifyListeners();
+    if (_userId != null) {
+      try {
+        await _supabase.from('pets').update({'name': newName}).eq('user_id', _userId!);
+      } catch (e) {
+        debugPrint("Error updating pet name: $e");
+      }
+    }
+  }
+
   @override
   void dispose() {
     _decayTimer?.cancel();
@@ -184,14 +196,15 @@ class PetProvider extends ChangeNotifier {
           .maybeSingle();
 
       if (data != null) {
-        _hunger = (data['hunger'] as num).toDouble();
-        _energy = (data['energy'] as num).toDouble();
-        _happiness = (data['happiness'] as num).toDouble();
-        _hygiene = (data['hygiene'] as num?)?.toDouble() ?? 70;
-        _bladder = (data['bladder'] as num?)?.toDouble() ?? 30;
+        _hunger = (data['hunger'] as num?)?.toDouble() ?? 50.0;
+        _energy = (data['energy'] as num?)?.toDouble() ?? 80.0;
+        _happiness = (data['happiness'] as num?)?.toDouble() ?? 60.0;
+        _hygiene = (data['hygiene'] as num?)?.toDouble() ?? 70.0;
+        _bladder = (data['bladder'] as num?)?.toDouble() ?? 30.0;
         _level = (data['level'] as num?)?.toInt() ?? 1;
-        _xp = (data['xp'] as num?)?.toDouble() ?? 0;
+        _xp = (data['xp'] as num?)?.toDouble() ?? 0.0;
         _coins = (data['coins'] as num?)?.toInt() ?? 100;
+        _petName = (data['name'] as String?) ?? 'Bobo';
         _updateGrowthStage();
         notifyListeners();
       }
