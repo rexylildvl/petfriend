@@ -36,14 +36,14 @@ class _RegisterPageState extends State<RegisterPage> {
     final confirmPassword = _confirmPasswordController.text;
     if (name.isEmpty || email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill in all fields')),
+        const SnackBar(content: Text('Lengkapi semua kolom terlebih dahulu')),
       );
       return;
     }
 
     if (password != confirmPassword) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Passwords do not match')),
+        const SnackBar(content: Text('Konfirmasi kata sandi tidak sama')),
       );
       return;
     }
@@ -66,10 +66,10 @@ class _RegisterPageState extends State<RegisterPage> {
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Account created! Please log in.'),
-          backgroundColor: Colors.green,
-        ),
+          const SnackBar(
+            content: Text('Akun berhasil dibuat! Silakan masuk.'),
+            backgroundColor: Colors.green,
+          ),
       );
       Navigator.pushAndRemoveUntil(
         context,
@@ -85,7 +85,7 @@ class _RegisterPageState extends State<RegisterPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Terjadi kesalahan: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -146,11 +146,11 @@ class _RegisterPageState extends State<RegisterPage> {
                 const SizedBox(height: 20),
                 
                 Text(
-                  "Create Account",
+                  "Buat Akun",
                   style: AppTheme.heading1.copyWith(color: AppTheme.primaryDark),
                 ),
                 Text(
-                  "Adopt your new friend today!",
+                  "Adopsi sahabat barumu hari ini!",
                   style: AppTheme.bodyMedium.copyWith(color: AppTheme.textSecondary),
                 ),
                 
@@ -158,28 +158,28 @@ class _RegisterPageState extends State<RegisterPage> {
 
                 _buildTextField(
                   controller: _nameController,
-                  label: "Your Name",
+                  label: "Nama Lengkap",
                   icon: Icons.person_rounded,
                   inputType: TextInputType.name,
                 ),
                 const SizedBox(height: 16),
                 _buildTextField(
                   controller: _emailController,
-                  label: "Email Address",
+                  label: "Alamat Email",
                   icon: Icons.email_rounded,
                   inputType: TextInputType.emailAddress,
                 ),
                 const SizedBox(height: 16),
                 _buildTextField(
                   controller: _passwordController,
-                  label: "Password",
+                  label: "Kata Sandi",
                   icon: Icons.lock_rounded,
                   isPassword: true,
                 ),
                 const SizedBox(height: 16),
                 _buildTextField(
                   controller: _confirmPasswordController,
-                  label: "Confirm Password",
+                  label: "Konfirmasi Kata Sandi",
                   icon: Icons.lock_outline_rounded,
                   isPassword: true,
                 ),
@@ -210,7 +210,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             ),
                           )
                         : const Text(
-                            "Adopt & Sign Up",
+                            "Adopsi & Daftar",
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,

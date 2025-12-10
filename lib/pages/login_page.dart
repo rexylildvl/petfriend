@@ -39,7 +39,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'PetFriend Login',
+                  'Masuk PetFriend',
                   style: AppTheme.heading1.copyWith(color: AppTheme.primaryDark),
                 ),
                 const SizedBox(height: 24),
@@ -59,7 +59,7 @@ class _LoginPageState extends State<LoginPage> {
                 TextField(
                   controller: _passwordController,
                   decoration: InputDecoration(
-                    labelText: 'Password',
+                    labelText: 'Kata Sandi',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -93,7 +93,7 @@ class _LoginPageState extends State<LoginPage> {
                             height: 18,
                             child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                           )
-                        : const Text('Sign In', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        : const Text('Masuk', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -105,7 +105,7 @@ class _LoginPageState extends State<LoginPage> {
                     );
                   },
                   child: Text(
-                    'Create account',
+                    'Buat akun',
                     style: TextStyle(color: AppTheme.primaryDark, fontWeight: FontWeight.w600),
                   ),
                 ),
@@ -137,7 +137,7 @@ class _LoginPageState extends State<LoginPage> {
       });
     } catch (e) {
       setState(() {
-        _error = 'Unexpected error: $e';
+        _error = 'Terjadi kesalahan: $e';
       });
     } finally {
       setState(() {
