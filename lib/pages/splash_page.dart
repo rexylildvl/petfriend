@@ -4,6 +4,7 @@ import '../providers/pet_provider.dart';
 import '../services/supabase_service.dart';
 import '../theme/app_theme.dart';
 import 'home_page.dart';
+import 'pet_setup_page.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -34,20 +35,29 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
 
   Future<void> _initData() async {
     try {
+      final hasPet = await SupabaseService.instance.userHasPet();
+      if (!mounted) return;
+
+      if (!hasPet) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const PetSetupPage()),
+        );
+        return;
+      }
+
       final setup = await SupabaseService.instance.ensureSetup();
-      
+
+      if (!mounted) return;
+      context.read<PetProvider>().init(setup.userId, setup.petName);
+
+      await Future.delayed(const Duration(seconds: 2));
+
       if (mounted) {
-        context.read<PetProvider>().init(setup.userId, setup.petName);
-        
-        // Wait a bit for animation
-        await Future.delayed(const Duration(seconds: 2));
-        
-        if (mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const HomePage()),
-          );
-        }
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const HomePage()),
+        );
       }
     } catch (e) {
       debugPrint("Error initializing data: $e");

@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:provider/provider.dart';
-import '../providers/pet_provider.dart';
+
 import '../theme/app_theme.dart';
-import 'splash_page.dart';
+import 'login_page.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -17,7 +16,6 @@ class _RegisterPageState extends State<RegisterPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  final _petNameController = TextEditingController();
   
   bool _isLoading = false;
   bool _isObscured = true;
@@ -28,7 +26,6 @@ class _RegisterPageState extends State<RegisterPage> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
-    _petNameController.dispose();
     super.dispose();
   }
 
@@ -37,9 +34,7 @@ class _RegisterPageState extends State<RegisterPage> {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
     final confirmPassword = _confirmPasswordController.text;
-    final petName = _petNameController.text.trim();
-
-    if (name.isEmpty || email.isEmpty || password.isEmpty || petName.isEmpty) {
+    if (name.isEmpty || email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please fill in all fields')),
       );
@@ -69,33 +64,18 @@ class _RegisterPageState extends State<RegisterPage> {
         throw Exception('Registration failed');
       }
 
-      final userId = authResponse.user!.id;
-
-      // 2. Create Pet
-      await Supabase.instance.client.from('pets').insert({
-        'user_id': userId,
-        'name': petName,
-        'hunger': 80,
-        'energy': 90,
-        'happiness': 90,
-        'hygiene': 100,
-        'bladder': 0,
-        'level': 1,
-        'xp': 0,
-        'coins': 100,
-        'identity_prompt': 'You are $petName, a friendly virtual bear.',
-      });
-
-      // 3. Initialize Provider
-      if (mounted) {
-        context.read<PetProvider>().init(userId, petName);
-        
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => const SplashPage()),
-          (route) => false,
-        );
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Account created! Please log in.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginPage()),
+        (route) => false,
+      );
     } on AuthException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -188,13 +168,6 @@ class _RegisterPageState extends State<RegisterPage> {
                   label: "Email Address",
                   icon: Icons.email_rounded,
                   inputType: TextInputType.emailAddress,
-                ),
-                const SizedBox(height: 16),
-                 _buildTextField(
-                  controller: _petNameController,
-                  label: "Pet Name (Cannot be changed!)",
-                  icon: Icons.pets_rounded,
-                  inputType: TextInputType.name,
                 ),
                 const SizedBox(height: 16),
                 _buildTextField(

@@ -8,6 +8,44 @@ class SupabaseService {
   static final SupabaseService instance = SupabaseService._();
   final SupabaseClient _client = Supabase.instance.client;
 
+  Future<bool> userHasPet() async {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null || userId.isEmpty) {
+      throw Exception('User not logged in');
+    }
+    await _upsertProfile(userId);
+    final data = await _client
+        .from('pets')
+        .select('id')
+        .eq('user_id', userId)
+        .maybeSingle();
+    return data != null;
+  }
+
+  Future<PetRow> createPet(String petName) async {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null || userId.isEmpty) {
+      throw Exception('User not logged in');
+    }
+    await _upsertProfile(userId);
+
+    final insert = await _client.from('pets').insert({
+      'user_id': userId,
+      'name': petName,
+      'hunger': 80,
+      'energy': 90,
+      'happiness': 90,
+      'hygiene': 100,
+      'bladder': 0,
+      'level': 1,
+      'xp': 0,
+      'coins': 100,
+      'identity_prompt': 'You are $petName, a friendly virtual bear.',
+    }).select().single();
+
+    return PetRow.fromMap(insert);
+  }
+
   Future<SetupResult> ensureSetup() async {
     final userId = _client.auth.currentUser?.id;
     if (userId == null || userId.isEmpty) {
