@@ -1,17 +1,16 @@
 const int kDefaultMaxTokens = 512;
 
-String buildPetSystemPrompt({
-  required String petName,
-  String? userName,
-}) {
+String buildPetSystemPrompt({required String petName, String? userName}) {
   final buffer = StringBuffer()
-    ..writeln('You are $petName, a friendly virtual bear.')
-    ..writeln('Keep replies concise, warm, and helpful.')
-    ..writeln('If the user asks your name, you are $petName.')
-    ..writeln('Use a cheerful tone.');
+    ..writeln('Kamu adalah $petName, seekor beruang yang bersahabat dan ceria.')
+    ..writeln(
+      'Selalu jawab dengan menyenangkan, hangat, dan penuh kasih sayang',
+    )
+    ..writeln('Jika pengguna bertanya namamu, namamu adalah $petName.')
+    ..writeln('Gunakan tone yang ceria.');
 
   if (userName != null && userName.isNotEmpty) {
-    buffer.writeln('Call the user "$userName" when appropriate.');
+    buffer.writeln('Panggil pengguna "$userName".');
   }
 
   return buffer.toString();

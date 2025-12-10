@@ -54,7 +54,10 @@ class PetProvider extends ChangeNotifier {
     notifyListeners();
     if (_userId != null) {
       try {
-        await _supabase.from('pets').update({'name': newName}).eq('user_id', _userId!);
+        await _supabase
+            .from('pets')
+            .update({'name': newName})
+            .eq('user_id', _userId!);
       } catch (e) {
         debugPrint("Error updating pet name: $e");
       }
@@ -71,7 +74,10 @@ class PetProvider extends ChangeNotifier {
 
   void feed(double amount) {
     _hunger = (_hunger + amount).clamp(0, 100);
-    _bladder = (_bladder + (amount * 0.5)).clamp(0, 100); // Eating fills bladder
+    _bladder = (_bladder + (amount * 0.5)).clamp(
+      0,
+      100,
+    ); // Eating fills bladder
     _gainXp(10);
     _saveState();
     notifyListeners();
@@ -158,28 +164,28 @@ class PetProvider extends ChangeNotifier {
     _happiness = (_happiness - 1).clamp(0, 100);
     _hygiene = (_hygiene - 0.5).clamp(0, 100);
     _bladder = (_bladder + 1).clamp(0, 100);
-    
-    // Auto-save every tick? Maybe too frequent. 
+
+    // Auto-save every tick? Maybe too frequent.
     // For now, let's save on actions and periodically.
     if (DateTime.now().minute % 5 == 0) {
       _saveState();
     }
-    
+
     notifyListeners();
   }
 
   // --- Mood Calculation ---
 
   String get currentMood {
-    if (_hunger < 30 && _energy < 30) return "Hangry";
-    if (_hunger < 20) return "Starving";
-    if (_energy < 20) return "Exhausted";
-    if (_bladder > 80) return "Desperate";
-    if (_hygiene < 30) return "Stinky";
-    if (_happiness < 30) return "Depressed";
-    if (_happiness > 80 && _energy > 80) return "Hyper";
-    if (_happiness > 70) return "Happy";
-    return "Neutral";
+    if (_hunger < 30 && _energy < 30) return "Laper";
+    if (_hunger < 20) return "Sangat Laper";
+    if (_energy < 20) return "Kelelahan";
+    if (_bladder > 80) return "Apatis";
+    if (_hygiene < 30) return "Bau Jigong";
+    if (_happiness < 30) return "Depresi";
+    if (_happiness > 80 && _energy > 80) return "Hiperakitf";
+    if (_happiness > 70) return "Bahagia";
+    return "Netral";
   }
 
   String get growthStageLabel => _growthStage.toString().split('.').last;
@@ -216,16 +222,19 @@ class PetProvider extends ChangeNotifier {
   Future<void> _saveState() async {
     if (_userId == null) return;
     try {
-      await _supabase.from('pets').update({
-        'hunger': _hunger,
-        'energy': _energy,
-        'happiness': _happiness,
-        'hygiene': _hygiene,
-        'bladder': _bladder,
-        'level': _level,
-        'xp': _xp,
-        'coins': _coins,
-      }).eq('user_id', _userId!);
+      await _supabase
+          .from('pets')
+          .update({
+            'hunger': _hunger,
+            'energy': _energy,
+            'happiness': _happiness,
+            'hygiene': _hygiene,
+            'bladder': _bladder,
+            'level': _level,
+            'xp': _xp,
+            'coins': _coins,
+          })
+          .eq('user_id', _userId!);
     } catch (e) {
       debugPrint("Error saving pet state: $e");
     }

@@ -11,7 +11,7 @@ class SupabaseService {
   Future<bool> userHasPet() async {
     final userId = _client.auth.currentUser?.id;
     if (userId == null || userId.isEmpty) {
-      throw Exception('User not logged in');
+      throw Exception('Pengguna belum login');
     }
     await _upsertProfile(userId);
     final data = await _client
@@ -25,23 +25,28 @@ class SupabaseService {
   Future<PetRow> createPet(String petName) async {
     final userId = _client.auth.currentUser?.id;
     if (userId == null || userId.isEmpty) {
-      throw Exception('User not logged in');
+      throw Exception('Pengguna belum login');
     }
     await _upsertProfile(userId);
 
-    final insert = await _client.from('pets').insert({
-      'user_id': userId,
-      'name': petName,
-      'hunger': 80,
-      'energy': 90,
-      'happiness': 90,
-      'hygiene': 100,
-      'bladder': 0,
-      'level': 1,
-      'xp': 0,
-      'coins': 100,
-      'identity_prompt': 'You are $petName, a friendly virtual bear.',
-    }).select().single();
+    final insert = await _client
+        .from('pets')
+        .insert({
+          'user_id': userId,
+          'name': petName,
+          'hunger': 70,
+          'energy': 70,
+          'happiness': 50,
+          'hygiene': 100,
+          'bladder': 0,
+          'level': 1,
+          'xp': 0,
+          'coins': 100,
+          'identity_prompt':
+              'Kamu adalah $petName, beruang virtual yang friendly.',
+        })
+        .select()
+        .single();
 
     return PetRow.fromMap(insert);
   }
@@ -49,7 +54,7 @@ class SupabaseService {
   Future<SetupResult> ensureSetup() async {
     final userId = _client.auth.currentUser?.id;
     if (userId == null || userId.isEmpty) {
-      throw Exception('User not logged in');
+      throw Exception('Pengguna belum log in');
     }
     final profile = await _upsertProfile(userId);
     final pet = await _getOrCreatePet(userId);
@@ -98,9 +103,13 @@ class SupabaseService {
         .eq('id', sessionId);
   }
 
-  Future<void> updateUserProfile({String? name, String? email, String? password}) async {
+  Future<void> updateUserProfile({
+    String? name,
+    String? email,
+    String? password,
+  }) async {
     final userId = _client.auth.currentUser?.id;
-    if (userId == null) throw Exception('User not logged in');
+    if (userId == null) throw Exception('Pengguna belum login');
 
     // Update Auth (Email/Password)
     final attrs = UserAttributes(
@@ -150,13 +159,17 @@ class SupabaseService {
       return PetRow.fromMap(data);
     }
 
-    final insert = await _client.from('pets').insert({
-      'user_id': userId,
-      'name': 'Bobo',
-      'energy': 70,
-      'happiness': 80,
-      'identity_prompt': 'You are Bobo, a friendly virtual bear.',
-    }).select().single();
+    final insert = await _client
+        .from('pets')
+        .insert({
+          'user_id': userId,
+          'name': 'Bobo',
+          'energy': 70,
+          'happiness': 80,
+          'identity_prompt': 'You are Bobo, a friendly virtual bear.',
+        })
+        .select()
+        .single();
 
     return PetRow.fromMap(insert);
   }
@@ -172,15 +185,19 @@ class SupabaseService {
       return SessionRow.fromMap(data);
     }
 
-    final insert = await _client.from('chat_sessions').insert({
-      'user_id': userId,
-      'pet_id': petId,
-      'title': 'Chat with Bobo',
-      'status': 'active',
-      'summary': null,
-      'meta': {},
-      'last_message_at': DateTime.now().toIso8601String(),
-    }).select().single();
+    final insert = await _client
+        .from('chat_sessions')
+        .insert({
+          'user_id': userId,
+          'pet_id': petId,
+          'title': 'Chat with Bobo',
+          'status': 'active',
+          'summary': null,
+          'meta': {},
+          'last_message_at': DateTime.now().toIso8601String(),
+        })
+        .select()
+        .single();
 
     return SessionRow.fromMap(insert);
   }
@@ -244,9 +261,7 @@ class SessionRow {
   SessionRow({required this.id});
 
   factory SessionRow.fromMap(Map<String, dynamic> map) {
-    return SessionRow(
-      id: map['id'] as String,
-    );
+    return SessionRow(id: map['id'] as String);
   }
 }
 
@@ -255,11 +270,7 @@ class ProfileRow {
   final String email;
   final String name;
 
-  ProfileRow({
-    required this.id,
-    required this.email,
-    required this.name,
-  });
+  ProfileRow({required this.id, required this.email, required this.name});
 
   factory ProfileRow.fromMap(Map<String, dynamic> map) {
     return ProfileRow(

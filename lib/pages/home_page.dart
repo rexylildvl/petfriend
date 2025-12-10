@@ -13,7 +13,8 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin {
+class _HomePageState extends State<HomePage>
+    with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _bounceAnimation;
 
@@ -28,14 +29,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       vsync: this,
     )..repeat(reverse: true);
 
-    _bounceAnimation = Tween<double>(
-      begin: -5,
-      end: 5,
-    ).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeInOut,
-      ),
+    _bounceAnimation = Tween<double>(begin: -5, end: 5).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
   }
 
@@ -92,11 +87,35 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    _buildFoodOption(pet, "Honey", "Sweet and energizing", Icons.water_drop, Colors.amber, 25, 15),
+                    _buildFoodOption(
+                      pet,
+                      "Madu",
+                      "Manis, enak",
+                      Icons.water_drop,
+                      Colors.amber,
+                      25,
+                      15,
+                    ),
                     const SizedBox(height: 12),
-                    _buildFoodOption(pet, "Fish", "Protein-rich meal", Icons.set_meal, Colors.blue, 20, 10),
+                    _buildFoodOption(
+                      pet,
+                      "Ikan",
+                      "Makanan kaya protein",
+                      Icons.set_meal,
+                      Colors.blue,
+                      20,
+                      10,
+                    ),
                     const SizedBox(height: 12),
-                    _buildFoodOption(pet, "Berries", "Fresh and healthy", Icons.spa, Colors.purple, 15, 20),
+                    _buildFoodOption(
+                      pet,
+                      "Beri",
+                      "Fresh dan sehat",
+                      Icons.spa,
+                      Colors.purple,
+                      15,
+                      20,
+                    ),
                     const SizedBox(height: 20),
                   ],
                 ),
@@ -119,21 +138,24 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       }
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          _isSleeping ? "Goodnight! Your bear is sleeping 😴" : "Good morning! Your bear is awake!",
-        ),
-        backgroundColor: _isSleeping ? Colors.indigo[600] : Colors.amber[600],
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
+    _showSnackBar(
+      _isSleeping
+          ? "Goodnight! Your bear is sleeping"
+          : "Good morning! Your bear is awake!",
+      _isSleeping ? Colors.indigo[600]! : Colors.amber[700]!,
+      icon: _isSleeping ? Icons.nights_stay : Icons.wb_sunny,
     );
   }
 
-  Widget _buildFoodOption(PetProvider pet, String name, String description, IconData icon, Color color, double energyGain, double happinessGain) {
+  Widget _buildFoodOption(
+    PetProvider pet,
+    String name,
+    String description,
+    IconData icon,
+    Color color,
+    double energyGain,
+    double happinessGain,
+  ) {
     bool isHungry = pet.hunger < 40;
     return InkWell(
       onTap: () {
@@ -145,16 +167,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           message += " and is no longer hungry!";
         }
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(message),
-            backgroundColor: color,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        );
+        _showSnackBar(message, color, icon: Icons.restaurant_menu);
       },
       borderRadius: BorderRadius.circular(16),
       child: Container(
@@ -191,10 +204,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                   const SizedBox(height: 4),
                   Text(
                     description,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.brown[600],
-                    ),
+                    style: TextStyle(fontSize: 13, color: Colors.brown[600]),
                   ),
                   if (isHungry && (name == "Honey" || name == "Fish"))
                     Padding(
@@ -222,22 +232,13 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     pet.clean();
     String message = "Your bear feels much better now";
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.green[600],
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-    );
+    _showSnackBar(message, Colors.green[600]!, icon: Icons.favorite);
   }
 
   @override
   Widget build(BuildContext context) {
     final pet = context.watch<PetProvider>();
-    
+
     bool isHungry = pet.hunger < 40;
     bool isSick = pet.hygiene < 40;
     bool isDesperate = pet.bladder > 80;
@@ -246,29 +247,31 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     Color statusColor = Colors.green;
 
     if (_isSleeping) {
-      bearStatus = "Sleeping peacefully";
+      bearStatus = "Tidur dengan tenang";
       statusColor = Colors.blue;
     } else if (isDesperate) {
-      bearStatus = "Needs Toilet!";
+      bearStatus = "Kebelet Berak!";
       statusColor = Colors.deepPurple;
     } else if (isSick) {
-      bearStatus = "Feeling sick";
+      bearStatus = "Sakit";
       statusColor = Colors.orange;
     } else if (isHungry) {
-      bearStatus = "Hungry";
+      bearStatus = "LApar";
       statusColor = Colors.orange;
     } else if (pet.energy < 30) {
-      bearStatus = "Tired";
+      bearStatus = "Capek";
       statusColor = Colors.orange;
     } else if (pet.happiness < 50) {
-      bearStatus = "Sad";
+      bearStatus = "Sedih";
       statusColor = Colors.red;
     }
 
     return Stack(
       children: [
         Scaffold(
-          backgroundColor: _isSleeping ? Colors.grey[900] : const Color(0xFFF8F0E3),
+          backgroundColor: _isSleeping
+              ? Colors.grey[900]
+              : const Color(0xFFF8F0E3),
           appBar: AppBar(
             title: const Text(
               "PetFriend",
@@ -339,21 +342,21 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                                   _isSleeping
                                       ? Icons.nightlight_round
                                       : isDesperate
-                                          ? Icons.wc
-                                          : isSick
-                                              ? Icons.medical_services
-                                              : isHungry
-                                                  ? Icons.restaurant
-                                                  : Icons.waving_hand,
+                                      ? Icons.wc
+                                      : isSick
+                                      ? Icons.medical_services
+                                      : isHungry
+                                      ? Icons.restaurant
+                                      : Icons.waving_hand,
                                   color: _isSleeping
                                       ? Colors.blue[200]
                                       : isDesperate
-                                          ? Colors.deepPurpleAccent
-                                          : isSick
-                                              ? Colors.orange[300]
-                                              : isHungry
-                                                  ? Colors.amber[300]
-                                                  : Colors.amber[300],
+                                      ? Colors.deepPurpleAccent
+                                      : isSick
+                                      ? Colors.orange[300]
+                                      : isHungry
+                                      ? Colors.amber[300]
+                                      : Colors.amber[300],
                                   size: 28,
                                 ),
                                 const SizedBox(width: 12),
@@ -379,7 +382,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                                   child: Text(
                                     _isSleeping
                                         ? "Let's keep it quiet until morning"
-                                        : "Your virtual bear is $bearStatus",
+                                        : "Beruang kamu $bearStatus",
                                     style: TextStyle(
                                       fontSize: 15,
                                       color: Colors.white.withOpacity(0.9),
@@ -388,19 +391,37 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                                 ),
                                 Container(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 12, vertical: 4),
+                                    horizontal: 14,
+                                    vertical: 5,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: statusColor.withOpacity(0.2),
+                                    color: statusColor.withOpacity(0.25),
                                     borderRadius: BorderRadius.circular(20),
                                     border: Border.all(
-                                        color: statusColor.withOpacity(0.5)),
+                                      color: statusColor.withOpacity(0.9),
+                                      width: 1.5,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: statusColor.withOpacity(0.35),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
                                   ),
                                   child: Text(
                                     bearStatus,
                                     style: TextStyle(
                                       fontSize: 12,
-                                      color: statusColor,
-                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 0.3,
+                                      shadows: [
+                                        Shadow(
+                                          color: statusColor.withOpacity(0.9),
+                                          blurRadius: 4,
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ),
@@ -421,19 +442,16 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                             colors: _isSleeping
                                 ? [Colors.grey[800]!, Colors.grey[600]!]
                                 : isSick
-                                    ? [
-                                        Colors.orange.shade100,
-                                        Colors.red.shade100
-                                      ]
-                                    : isHungry
-                                        ? [
-                                            Colors.amber.shade100,
-                                            Colors.orange.shade100
-                                          ]
-                                        : [
-                                            Colors.brown.shade100,
-                                            Colors.orange.shade100,
-                                          ],
+                                ? [Colors.orange.shade100, Colors.red.shade100]
+                                : isHungry
+                                ? [
+                                    Colors.amber.shade100,
+                                    Colors.orange.shade100,
+                                  ]
+                                : [
+                                    Colors.brown.shade100,
+                                    Colors.orange.shade100,
+                                  ],
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
                           ),
@@ -461,8 +479,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                                         shape: BoxShape.circle,
                                         boxShadow: [
                                           BoxShadow(
-                                            color:
-                                                Colors.black.withOpacity(0.3),
+                                            color: Colors.black.withOpacity(
+                                              0.3,
+                                            ),
                                             blurRadius: 15,
                                             offset: const Offset(0, 5),
                                           ),
@@ -528,12 +547,12 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                                                 color: isSick
                                                     ? Colors.orange[300]
                                                     : isHungry
-                                                        ? Colors.amber[600]
-                                                        : null,
+                                                    ? Colors.amber[600]
+                                                    : null,
                                                 colorBlendMode:
                                                     isSick || isHungry
-                                                        ? BlendMode.color
-                                                        : null,
+                                                    ? BlendMode.color
+                                                    : null,
                                               ),
                                             ),
                                           ),
@@ -546,8 +565,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                                               color: isSick
                                                   ? Colors.orange[800]
                                                   : isHungry
-                                                      ? Colors.amber[800]
-                                                      : Colors.brown[800],
+                                                  ? Colors.amber[800]
+                                                  : Colors.brown[800],
                                               letterSpacing: 0.5,
                                             ),
                                           ),
@@ -559,8 +578,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                                               color: isSick
                                                   ? Colors.orange[600]
                                                   : isHungry
-                                                      ? Colors.amber[600]
-                                                      : Colors.brown[600],
+                                                  ? Colors.amber[600]
+                                                  : Colors.brown[600],
                                               fontStyle: FontStyle.italic,
                                             ),
                                           ),
@@ -620,14 +639,16 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                             _buildStatBar(
                               "Hunger",
                               pet.hunger / 100,
-                              isHungry ? Colors.orange[600]! : Colors.amber[600]!,
+                              isHungry
+                                  ? Colors.orange[600]!
+                                  : Colors.amber[600]!,
                               Icons.restaurant,
                               isCritical: isHungry,
                             ),
                             const SizedBox(height: 16),
                             _buildStatBar(
                               "Energy",
-                              pet.energy / 100, 
+                              pet.energy / 100,
                               isHungry
                                   ? Colors.orange[600]!
                                   : Colors.amber[600]!,
@@ -653,14 +674,18 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                               "Hygiene",
                               pet.hygiene / 100,
                               isSick ? Colors.orange[600]! : Colors.green[500]!,
-                              isSick ? Icons.medical_services : Icons.cleaning_services,
+                              isSick
+                                  ? Icons.medical_services
+                                  : Icons.cleaning_services,
                               isCritical: pet.hygiene < 50,
                             ),
                             const SizedBox(height: 16),
                             _buildStatBar(
                               "Bladder",
                               pet.bladder / 100,
-                              isDesperate ? Colors.deepPurple : Colors.blue[300]!,
+                              isDesperate
+                                  ? Colors.deepPurple
+                                  : Colors.blue[300]!,
                               Icons.water_drop,
                               isCritical: isDesperate,
                             ),
@@ -696,15 +721,20 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                             Container(
                               margin: const EdgeInsets.only(left: 10),
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 4),
+                                horizontal: 12,
+                                vertical: 4,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.orange.withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Row(
                                 children: [
-                                  Icon(Icons.info_outline,
-                                      size: 14, color: Colors.orange[800]),
+                                  Icon(
+                                    Icons.info_outline,
+                                    size: 14,
+                                    color: Colors.orange[800],
+                                  ),
                                   const SizedBox(width: 4),
                                   Text(
                                     "Feed me!",
@@ -729,9 +759,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                             width: (MediaQuery.of(context).size.width - 52) / 2,
                             child: _buildActionCard(
                               icon: Icons.restaurant_outlined,
-                              label: "Feed",
+                              label: "makan",
                               color: Colors.amber[600]!,
-                              onTap: _isSleeping ? null : () => _showFeedOptions(pet),
+                              onTap: _isSleeping
+                                  ? null
+                                  : () => _showFeedOptions(pet),
                               isHighlighted: isHungry && !_isSleeping,
                             ),
                           ),
@@ -739,12 +771,17 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                             width: (MediaQuery.of(context).size.width - 52) / 2,
                             child: _buildActionCard(
                               icon: Icons.sports_baseball_outlined,
-                              label: "Play",
+                              label: "Main",
                               color: Colors.orange[500]!,
-                              onTap: _isSleeping ? null : () {
-                                pet.play();
-                                _showSnackBar("Played with ${pet.petName}! Fun!", Colors.orange[500]!);
-                              },
+                              onTap: _isSleeping
+                                  ? null
+                                  : () {
+                                      pet.play();
+                                      _showSnackBar(
+                                        "Played with ${pet.petName}! Fun!",
+                                        Colors.orange[500]!,
+                                      );
+                                    },
                               isHighlighted: pet.happiness < 50 && !_isSleeping,
                             ),
                           ),
@@ -752,7 +789,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                             width: (MediaQuery.of(context).size.width - 52) / 2,
                             child: _buildActionCard(
                               icon: Icons.cleaning_services_outlined,
-                              label: "Clean",
+                              label: "Mandi",
                               color: Colors.green[500]!,
                               onTap: _isSleeping ? null : () => _healPet(pet),
                               isHighlighted: isSick && !_isSleeping,
@@ -764,10 +801,15 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                               icon: Icons.wc_outlined,
                               label: "Toilet",
                               color: Colors.deepPurple[400]!,
-                              onTap: _isSleeping ? null : () {
-                                pet.useToilet();
-                                _showSnackBar("${pet.petName} feels relieved!", Colors.deepPurple[400]!);
-                              },
+                              onTap: _isSleeping
+                                  ? null
+                                  : () {
+                                      pet.useToilet();
+                                      _showSnackBar(
+                                        "${pet.petName} feels relieved!",
+                                        Colors.deepPurple[400]!,
+                                      );
+                                    },
                               isHighlighted: isDesperate && !_isSleeping,
                             ),
                           ),
@@ -777,7 +819,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                               icon: _isSleeping
                                   ? Icons.wb_sunny_outlined
                                   : Icons.nights_stay_outlined,
-                              label: _isSleeping ? "Wake Up" : "Sleep",
+                              label: _isSleeping ? "Bangun" : "Tidur",
                               color: _isSleeping
                                   ? Colors.blue[200]!
                                   : Colors.indigo[600]!,
@@ -798,21 +840,24 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: _isSleeping ? Colors.grey[900] : const Color(0xFFF8F0E3),
+                  color: _isSleeping
+                      ? Colors.grey[900]
+                      : const Color(0xFFF8F0E3),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.1),
                       blurRadius: 10,
                       offset: const Offset(0, -5),
-                    )
+                    ),
                   ],
                 ),
                 child: SafeArea(
                   top: false,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          _isSleeping ? Colors.grey[700] : Colors.brown[700],
+                      backgroundColor: _isSleeping
+                          ? Colors.grey[700]
+                          : Colors.brown[700],
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 18),
                       shape: RoundedRectangleBorder(
@@ -830,8 +875,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                               context,
                               PageRouteBuilder(
                                 pageBuilder: (_, __, ___) => const ChatPage(),
-                                transitionDuration:
-                                    const Duration(milliseconds: 400),
+                                transitionDuration: const Duration(
+                                  milliseconds: 400,
+                                ),
                                 transitionsBuilder: (_, animation, __, child) {
                                   return SlideTransition(
                                     position: Tween<Offset>(
@@ -855,14 +901,15 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                         const SizedBox(width: 12),
                         Text(
                           _isSleeping
-                              ? "Bear is sleeping..."
-                              : "Chat with Your Bear",
+                              ? "Beruangmu lagi tidur"
+                              : "Ngobrol sama beruang yuk!",
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 0.3,
-                            color:
-                                _isSleeping ? Colors.grey[300] : Colors.white,
+                            color: _isSleeping
+                                ? Colors.grey[300]
+                                : Colors.white,
                           ),
                         ),
                       ],
@@ -910,10 +957,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                   const SizedBox(height: 10),
                   Text(
                     "${pet.petName} is sleeping peacefully",
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.grey[300],
-                    ),
+                    style: TextStyle(fontSize: 18, color: Colors.grey[300]),
                   ),
                   const SizedBox(height: 30),
                   ElevatedButton.icon(
@@ -924,7 +968,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                       backgroundColor: Colors.blue[800],
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 30, vertical: 15),
+                        horizontal: 30,
+                        vertical: 15,
+                      ),
                     ),
                   ),
                 ],
@@ -935,8 +981,13 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     );
   }
 
-  Widget _buildStatBar(String label, double value, Color color, IconData icon,
-      {bool isCritical = false}) {
+  Widget _buildStatBar(
+    String label,
+    double value,
+    Color color,
+    IconData icon, {
+    bool isCritical = false,
+  }) {
     return Row(
       children: [
         Container(
@@ -949,7 +1000,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           child: Center(
             child: Icon(
               icon,
-              color: _isSleeping ? color.withOpacity(0.7) : color,
+              color: _isSleeping ? color.withOpacity(0.8) : color,
               size: 24,
             ),
           ),
@@ -970,8 +1021,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
                           color: _isSleeping
-                              ? Colors.grey[300]
-                              : Colors.brown[800],
+                              ? Colors.grey[200]
+                              : Colors.brown[900],
                         ),
                       ),
                       if (isCritical && !_isSleeping)
@@ -979,7 +1030,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                           padding: const EdgeInsets.only(left: 8),
                           child: Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 6, vertical: 2),
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.red.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(4),
@@ -1002,7 +1055,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: _isSleeping ? color.withOpacity(0.8) : color,
+                      color: _isSleeping ? Colors.white70 : Colors.brown[900],
                     ),
                   ),
                 ],
@@ -1013,9 +1066,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                 child: LinearProgressIndicator(
                   value: value,
                   backgroundColor: _isSleeping
-                      ? Colors.grey[700]
-                      : color.withOpacity(0.15),
-                  color: color,
+                      ? Colors.grey[800]
+                      : color.withOpacity(0.25),
+                  color: _isSleeping ? color.withOpacity(0.8) : color,
                   minHeight: 8,
                 ),
               ),
@@ -1047,8 +1100,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               color: isHighlighted
                   ? color.withOpacity(0.8)
                   : _isSleeping
-                      ? color.withOpacity(0.5)
-                      : color.withOpacity(0.3),
+                  ? color.withOpacity(0.5)
+                  : color.withOpacity(0.3),
               width: isHighlighted ? 3 : 2,
             ),
             boxShadow: isHighlighted
@@ -1082,11 +1135,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                           : color.withOpacity(isHighlighted ? 0.25 : 0.15),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(
-                      icon,
-                      size: 28,
-                      color: color,
-                    ),
+                    child: Icon(icon, size: 28, color: color),
                   ),
                   const SizedBox(height: 12),
                   Text(
@@ -1094,9 +1143,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: _isSleeping
-                          ? Colors.grey[300]
-                          : Colors.brown[800],
+                      color: _isSleeping ? Colors.grey[300] : Colors.brown[800],
                     ),
                   ),
                 ],
@@ -1127,17 +1174,39 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     );
   }
 
+  void _showSnackBar(String message, Color color, {IconData? icon}) {
+    final content = Row(
+      children: [
+        Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.15),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon ?? Icons.info, color: Colors.white, size: 18),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            message,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ],
+    );
 
-  void _showSnackBar(String message, Color color) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
+        content: content,
         backgroundColor: color,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        duration: const Duration(milliseconds: 1000),
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        duration: const Duration(milliseconds: 1400),
       ),
     );
   }

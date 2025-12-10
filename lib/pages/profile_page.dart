@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../providers/pet_provider.dart';
-import '../services/supabase_service.dart';
 import '../theme/app_theme.dart';
 import 'login_page.dart';
 
@@ -14,11 +14,9 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  String userName = 'Loading...';
-  String userEmail = 'Loading...';
-  String userPassword = ''; // Don't show actual password
-
-  String petHobby = 'Forest exploration, Honey collection'; // Placeholder
+  String _userName = 'Memuat...';
+  String _userEmail = 'Memuat...';
+  String _petHobby = 'Menjelajah hutan, mengumpulkan madu';
 
   @override
   void initState() {
@@ -28,223 +26,132 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _loadUserProfile() async {
     final user = Supabase.instance.client.auth.currentUser;
-    if (user != null) {
-      setState(() {
-        userEmail = user.email ?? '';
-        userName = user.userMetadata?['name'] ?? 'Friend';
-      });
-      
-      // Try to fetch from profiles table for most up-to-date name
-      try {
-        final data = await Supabase.instance.client
-            .from('profiles')
-            .select()
-            .eq('id', user.id)
-            .maybeSingle();
-        if (data != null && mounted) {
-          setState(() {
-            userName = data['name'] ?? userName;
-          });
-        }
-      } catch (e) {
-        debugPrint("Error loading profile: $e");
+    if (user == null) return;
+
+    setState(() {
+      _userEmail = user.email ?? '';
+      _userName = user.userMetadata?['name'] ?? 'Teman';
+    });
+
+    try {
+      final data = await Supabase.instance.client
+          .from('profiles')
+          .select()
+          .eq('id', user.id)
+          .maybeSingle();
+      if (data != null && mounted) {
+        setState(() {
+          _userName = (data['name'] as String?) ?? _userName;
+        });
       }
+    } catch (e) {
+      debugPrint('Gagal memuat profil: $e');
     }
   }
 
-  void _showEditDialog(String type) {
-    final petProvider = context.read<PetProvider>();
-    final TextEditingController nameController = TextEditingController();
-    final TextEditingController field2Controller = TextEditingController();
-    final TextEditingController field3Controller = TextEditingController();
+  Future<void> _editUser() async {
+    final nameController = TextEditingController(text: _userName);
+    final emailController = TextEditingController(text: _userEmail);
 
-    if (type == 'user') {
-      nameController.text = userName;
-      field2Controller.text = userEmail;
-      field3Controller.text = ''; // Password field empty by default
-    } else {
-      nameController.text = petProvider.petName;
-      field2Controller.text = petHobby;
-    }
-
-    showDialog(
+    await showDialog(
       context: context,
-      builder: (BuildContext context) {
-        bool isPasswordVisible = false;
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return Dialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('Ubah Profil'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(labelText: 'Nama lengkap'),
               ),
-              child: Container(
-                padding: const EdgeInsets.all(24),
-                constraints:
-                const BoxConstraints(maxWidth: 450, maxHeight: 600),
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            type == 'user'
-                                ? 'Edit Personal Profile'
-                                : 'Edit Pet Profile',
-                            style: AppTheme.heading2,
-                          ),
-                          IconButton(
-                            onPressed: () => Navigator.pop(context),
-                            icon: const Icon(Icons.close),
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                      TextField(
-                        controller: nameController,
-                        decoration: InputDecoration(
-                          labelText:
-                          type == 'user' ? 'Full Name' : 'Pet Name',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          filled: true,
-                          fillColor: Colors.grey[50],
-                          prefixIcon: Icon(
-                            type == 'user'
-                                ? Icons.person_outline
-                                : Icons.pets_outlined,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      TextField(
-                        controller: field2Controller,
-                        maxLines: type == 'user' ? 1 : 3,
-                        decoration: InputDecoration(
-                          labelText: type == 'user'
-                              ? 'Email Address'
-                              : 'Interests & Activities',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          filled: true,
-                          fillColor: Colors.grey[50],
-                          prefixIcon: Icon(
-                            type == 'user'
-                                ? Icons.email_outlined
-                                : Icons.interests_outlined,
-                          ),
-                        ),
-                      ),
-                      if (type == 'user') ...[
-                        const SizedBox(height: 16),
-                        TextField(
-                          controller: field3Controller,
-                          obscureText: !isPasswordVisible,
-                          decoration: InputDecoration(
-                            labelText: 'New Password (Optional)',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            filled: true,
-                            fillColor: Colors.grey[50],
-                            prefixIcon: const Icon(Icons.lock_outline),
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                isPasswordVisible
-                                    ? Icons.visibility_outlined
-                                    : Icons.visibility_off_outlined,
-                              ),
-                              onPressed: () {
-                                setDialogState(() {
-                                  isPasswordVisible = !isPasswordVisible;
-                                });
-                              },
-                            ),
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: 24),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: const Text('Cancel'),
-                          ),
-                          const SizedBox(width: 12),
-                          ElevatedButton(
-                            onPressed: () async {
-                              try {
-                                if (type == 'user') {
-                                  await SupabaseService.instance.updateUserProfile(
-                                    name: nameController.text,
-                                    email: field2Controller.text,
-                                    password: field3Controller.text.isNotEmpty ? field3Controller.text : null,
-                                  );
-                                  setState(() {
-                                    userName = nameController.text;
-                                    userEmail = field2Controller.text;
-                                  });
-                                } else {
-                                  await petProvider.updateName(nameController.text);
-                                  setState(() {
-                                    petHobby = field2Controller.text;
-                                  });
-                                }
-                                
-                                if (mounted) {
-                                  Navigator.pop(context);
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        type == 'user'
-                                            ? 'Profile updated successfully'
-                                            : 'Pet profile updated',
-                                      ),
-                                      backgroundColor: Colors.green,
-                                      behavior: SnackBarBehavior.floating,
-                                    ),
-                                  );
-                                }
-                              } catch (e) {
-                                if (mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('Error updating: $e'),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
-                                }
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.primary,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 24,
-                                vertical: 12,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            child: Text(
-                                type == 'user' ? 'Save Changes' : 'Update Profile'),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: emailController,
+                decoration: const InputDecoration(labelText: 'Email'),
+                enabled: false,
               ),
-            );
-          },
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Batal'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final user = Supabase.instance.client.auth.currentUser;
+                if (user != null) {
+                  await Supabase.instance.client
+                      .from('profiles')
+                      .update({'name': nameController.text.trim()})
+                      .eq('id', user.id);
+                  await Supabase.instance.client.auth.updateUser(
+                    UserAttributes(data: {'name': nameController.text.trim()}),
+                  );
+                  setState(() => _userName = nameController.text.trim());
+                }
+                if (mounted) Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Profil diperbarui')),
+                );
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary),
+              child: const Text('Simpan'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _editPet(PetProvider pet) async {
+    final petNameController = TextEditingController(text: pet.petName);
+    final hobbyController = TextEditingController(text: _petHobby);
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('Profil Hewan'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: petNameController,
+                decoration: const InputDecoration(labelText: 'Nama hewan'),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: hobbyController,
+                decoration: const InputDecoration(labelText: 'Hobi hewan'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Batal'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final name = petNameController.text.trim();
+                final hobby = hobbyController.text.trim();
+                if (name.isNotEmpty) {
+                  await pet.updateName(name);
+                  setState(() => _petHobby = hobby);
+                }
+                if (mounted) Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Profil hewan diperbarui')),
+                );
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary),
+              child: const Text('Simpan'),
+            ),
+          ],
         );
       },
     );
@@ -258,327 +165,19 @@ class _ProfilePageState extends State<ProfilePage> {
       backgroundColor: AppTheme.background,
       body: CustomScrollView(
         slivers: [
-          SliverAppBar(
-            expandedHeight: 250,
-            pinned: false,
-            backgroundColor: AppTheme.primaryDark,
-            flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      AppTheme.primaryDark,
-                      AppTheme.primary,
-                    ],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                  ),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 20),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: 120,
-                        height: 120,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: AppTheme.primaryLight,
-                            width: 4,
-                          ),
-                        ),
-                        child: const Icon(
-                          Icons.account_circle_outlined,
-                          size: 100,
-                          color: AppTheme.primary,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        userName,
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        userEmail,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.white.withOpacity(0.85),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
+          _buildHeader(),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(20.0),
+              padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppTheme.primary.withOpacity(0.08),
-                          blurRadius: 20,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.person_outline,
-                                  color: AppTheme.primary,
-                                  size: 24,
-                                ),
-                                const SizedBox(width: 12),
-                                Text(
-                                  "Personal Information",
-                                  style: AppTheme.heading3,
-                                ),
-                              ],
-                            ),
-                            IconButton(
-                              onPressed: () => _showEditDialog('user'),
-                              icon: const Icon(
-                                Icons.edit_outlined,
-                                color: AppTheme.textSecondary,
-                                size: 20,
-                              ),
-                              tooltip: "Edit Information",
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-                        _buildInfoRow(
-                          Icons.person_outline,
-                          "Full Name",
-                          userName,
-                        ),
-                        const SizedBox(height: 16),
-                        _buildInfoRow(
-                          Icons.email_outlined,
-                          "Email Address",
-                          userEmail,
-                        ),
-                        const SizedBox(height: 16),
-                        _buildInfoRow(
-                          Icons.lock_outline,
-                          "Password",
-                          "••••••••",
-                          isPassword: true,
-                        ),
-                      ],
-                    ),
-                  ),
+                  _buildInfoCard(),
+                  const SizedBox(height: 20),
+                  _buildPetCard(pet),
                   const SizedBox(height: 24),
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: AppTheme.accentLight.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppTheme.primary.withOpacity(0.08),
-                          blurRadius: 20,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                      border: Border.all(
-                        color: AppTheme.accentLight,
-                        width: 1.5,
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.pets_outlined,
-                                  color: AppTheme.primary,
-                                  size: 24,
-                                ),
-                                const SizedBox(width: 12),
-                                Text(
-                                  "Pet Companion",
-                                  style: AppTheme.heading3,
-                                ),
-                              ],
-                            ),
-                            IconButton(
-                              onPressed: () => _showEditDialog('pet'),
-                              icon: const Icon(
-                                Icons.edit_outlined,
-                                color: AppTheme.textSecondary,
-                                size: 20,
-                              ),
-                              tooltip: "Edit Pet Profile",
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-                        Center(
-                          child: Column(
-                            children: [
-                              Container(
-                                width: 120,
-                                height: 120,
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(60),
-                                  border: Border.all(
-                                    color: AppTheme.primaryLight,
-                                    width: 3,
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: AppTheme.primary.withOpacity(0.15),
-                                      blurRadius: 10,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
-                                ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(60),
-                                  child: Image.asset(
-                                    'assets/bear.png',
-                                    width: 80,
-                                    height: 80,
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                pet.petName,
-                                style: AppTheme.heading2,
-                              ),
-                              const SizedBox(height: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppTheme.accentLight,
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(
-                                    color: AppTheme.accent,
-                                  ),
-                                ),
-                                child: Text(
-                                  "Level ${pet.level} ${pet.growthStageLabel}",
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppTheme.primaryDark,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        _buildBearInfoRow(
-                          Icons.interests_outlined,
-                          "Interests",
-                          petHobby,
-                          maxLines: 3,
-                        ),
-                      ],
-                    ),
-                  ),
+                  _buildLogoutButton(),
                   const SizedBox(height: 32),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        showDialog(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            title: const Text('Confirm Logout'),
-                            content: const Text(
-                                'Are you sure you want to log out?'),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context),
-                                child: const Text('Cancel'),
-                              ),
-                              ElevatedButton(
-                                onPressed: () async {
-                                  await Supabase.instance.client.auth.signOut();
-                                  if (mounted) {
-                                    Navigator.pushAndRemoveUntil(
-                                      context,
-                                      MaterialPageRoute(builder: (_) => const LoginPage()),
-                                      (route) => false,
-                                    );
-                                  }
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.red,
-                                  foregroundColor: Colors.white,
-                                ),
-                                child: const Text('Logout'),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                      icon: const Icon(
-                        Icons.logout_outlined,
-                        color: Colors.white,
-                      ),
-                      label: const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 16),
-                        child: Text(
-                          "Log Out",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primary,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        elevation: 2,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 40),
                 ],
               ),
             ),
@@ -588,8 +187,266 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String label, String value,
-      {bool isPassword = false}) {
+  SliverAppBar _buildHeader() {
+    return SliverAppBar(
+      expandedHeight: 230,
+      pinned: false,
+      backgroundColor: AppTheme.primaryDark,
+      flexibleSpace: FlexibleSpaceBar(
+        background: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [AppTheme.primaryDark, AppTheme.primary],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 110,
+                  height: 110,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: AppTheme.primaryLight,
+                      width: 4,
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.account_circle_outlined,
+                    size: 90,
+                    color: AppTheme.primary,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  _userName,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  _userEmail,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.white.withOpacity(0.85),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoCard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primary.withOpacity(0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.person_outline, color: AppTheme.primary),
+                  const SizedBox(width: 10),
+                  Text("Info Pribadi", style: AppTheme.heading3),
+                ],
+              ),
+              IconButton(
+                onPressed: _editUser,
+                icon: const Icon(Icons.edit_outlined, color: AppTheme.textSecondary),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _buildInfoRow(Icons.person_outline, "Nama Lengkap", _userName),
+          const SizedBox(height: 14),
+          _buildInfoRow(Icons.email_outlined, "Email", _userEmail),
+          const SizedBox(height: 14),
+          _buildInfoRow(Icons.lock_outline, "Kata Sandi", "••••••••", isPassword: true),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPetCard(PetProvider pet) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primary.withOpacity(0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+        border: Border.all(color: AppTheme.accentLight, width: 1.3),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.pets_outlined, color: AppTheme.primary),
+                  const SizedBox(width: 10),
+                  Text("Profil Hewan", style: AppTheme.heading3),
+                ],
+              ),
+              IconButton(
+                onPressed: () => _editPet(pet),
+                icon: const Icon(Icons.edit_outlined, color: AppTheme.textSecondary),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Center(
+            child: Column(
+              children: [
+                Container(
+                  width: 110,
+                  height: 110,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(55),
+                    border: Border.all(color: AppTheme.primaryLight, width: 3),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppTheme.primary.withOpacity(0.15),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(55),
+                    child: Image.asset(
+                      'assets/bear.png',
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(pet.petName, style: AppTheme.heading2),
+                const SizedBox(height: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppTheme.accentLight,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: AppTheme.accent),
+                  ),
+                  child: Text(
+                    "Level ${pet.level} ${pet.growthStageLabel}",
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.primaryDark,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 18),
+          _buildBearInfoRow(
+            Icons.interests_outlined,
+            "Hobi",
+            _petHobby,
+            maxLines: 3,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLogoutButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        onPressed: () {
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: const Text('Konfirmasi Keluar'),
+              content: const Text('Yakin ingin keluar dari akun?'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Batal'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    await Supabase.instance.client.auth.signOut();
+                    if (!mounted) return;
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (_) => const LoginPage()),
+                      (route) => false,
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Keluar'),
+                ),
+              ],
+            ),
+          );
+        },
+        icon: const Icon(Icons.logout_outlined, color: Colors.white),
+        label: const Padding(
+          padding: EdgeInsets.symmetric(vertical: 14),
+          child: Text(
+            "Keluar",
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+          ),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppTheme.primary,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          elevation: 2,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(
+    IconData icon,
+    String label,
+    String value, {
+    bool isPassword = false,
+  }) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -600,13 +457,9 @@ class _ProfilePageState extends State<ProfilePage> {
             color: AppTheme.primaryLight.withOpacity(0.2),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(
-            icon,
-            color: AppTheme.primary,
-            size: 20,
-          ),
+          child: Icon(icon, color: AppTheme.primary, size: 20),
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: 14),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -617,7 +470,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   fontSize: 12,
                   color: AppTheme.textSecondary,
                   fontWeight: FontWeight.w500,
-                  letterSpacing: 0.3,
+                  letterSpacing: 0.2,
                 ),
               ),
               const SizedBox(height: 4),
@@ -636,8 +489,12 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildBearInfoRow(IconData icon, String label, String value,
-      {int maxLines = 1}) {
+  Widget _buildBearInfoRow(
+    IconData icon,
+    String label,
+    String value, {
+    int maxLines = 2,
+  }) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -645,16 +502,12 @@ class _ProfilePageState extends State<ProfilePage> {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: AppTheme.accentLight,
+            color: AppTheme.primaryLight.withOpacity(0.2),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(
-            icon,
-            color: AppTheme.accentDark,
-            size: 20,
-          ),
+          child: Icon(icon, color: AppTheme.primary, size: 20),
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: 14),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -665,19 +518,19 @@ class _ProfilePageState extends State<ProfilePage> {
                   fontSize: 12,
                   color: AppTheme.textSecondary,
                   fontWeight: FontWeight.w500,
-                  letterSpacing: 0.3,
+                  letterSpacing: 0.2,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 value,
+                maxLines: maxLines,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: 16,
                   color: AppTheme.textPrimary,
                   fontWeight: FontWeight.w600,
                 ),
-                maxLines: maxLines,
-                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
